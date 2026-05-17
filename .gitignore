@@ -1,0 +1,68 @@
+# —— 永不入库 (用户私产 / 凭证 / 运行时) ——
+# 这些只该出现在 ~/.claude/, 仓库不该有
+.credentials.json
+.claude.json
+.claude.json.backup.*
+**/settings.local.json
+**/security_warnings_*.json
+**/stats-cache.json
+**/mcp-needs-auth-cache.json
+
+# 会话历史 / 缓存 / 临时数据
+**/history.jsonl
+**/projects/**/*.jsonl
+**/projects/**/*.txt
+**/todos/
+**/cache/
+**/debug/
+**/file-history/
+**/paste-cache/
+**/session-env/
+**/shell-snapshots/
+**/statsig/
+**/telemetry/
+**/usage-data/
+**/ide/
+**/plans/
+**/tasks/
+**/teams/
+**/backups/
+
+# —— 普通工程产物 ——
+# Node
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+.npmrc
+.pnpm-store/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Rust
+target/
+
+# Editor / OS
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+!.vscode/settings.example.json
+
+# 日志
+*.log
+*.tmp
+
+# 仓库本地配置 (个人覆盖)
+.env
+.env.local
+*.local
