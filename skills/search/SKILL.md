@@ -1,6 +1,6 @@
 ---
 name: search
-description: "并行子代理 + 引文锁源的深度调研 skill, 回答具体研究问题、产出可追溯低幻觉报告。与 /learn 区分: /learn 是收集材料→写成文章, /search 是回答研究问题→出调研报告。不适合单次问答或单页阅读。"
+description: "并行子代理 + 引文锁源的深度调研 skill, 回答具体研究问题、产出可追溯低幻觉报告。定位: 出调研报告 (非写文章 / 非单页核查)。不适合单次问答或单页阅读。"
 when_to_use: "深度调研, 调研一下, 综述, 技术选型, 库对比, 框架对比, SDK 选型, 性能 benchmark, 竞品分析, 行业报告, 市场调研, 政策分析, deep research, survey, landscape, library comparison, framework selection, SDK choice, benchmark, market research, competitive analysis, write a report on"
 metadata:
   version: "1.3.0"
