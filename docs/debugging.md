@@ -2,15 +2,33 @@
 
 调试 skill 的常见坑 + 诊断步骤。基于 Task B / D 的调研结果。
 
+## 三种 skill 作用域
+
+本仓采用 **项目级开发 + 全局拷贝** 双轨:
+
+```
+1. ~/项目/.claude/skills/X/SKILL.md    项目级 (cd 进项目自动加载)
+2. ~/.claude/skills/X/SKILL.md         全局 (任何项目都能用)
+3. plugin 装的                          通过 /plugin install
+```
+
+优先级: 项目级 > 全局 > plugin
+
+**本仓**:
+- `~/WebProject/claude-workflow/.claude/skills/X/` ← 真源, 开发改这里
+- `~/.claude/skills/X/` ← `sync.sh` 拷贝来的副本, 全局生效
+
 ## Hot Reload
 
 **Claude Code 2.1.0+ (2026-01-07 发布) 已内置 hot-reload** —
 
 ```
-改 ~/.claude/skills/X/SKILL.md  →  下一条 prompt 即生效
+改 .claude/skills/X/SKILL.md  →  下一条 prompt 即生效 (cd 在仓库内时)
 ```
 
-不需要重启会话, 不需要 `/reload`。只要 `~/.claude/skills/X/` 的内容变了 (含 symlink 指向的源文件), Claude Code 下次发 prompt 时自动 pick up。
+不需要重启会话, 不需要 `/reload`。Claude Code 下次发 prompt 时自动 pick up。
+
+**全局副本 (~/.claude/skills/) 是 sync 来的拷贝**, 改它没意义 — 下次 sync 会覆盖。**真源是仓库 .claude/**。
 
 **例外**: 通过 `/plugin install` 装的 plugin **不享受 hot-reload** (bug #35641 — 必须全重启)。
 
@@ -74,20 +92,21 @@ jq '.installedPlugins, .enabledPlugins' ~/.claude.json
 ## "改了不生效" 诊断
 
 ```bash
-# ① 确认 symlink 指对地方
-ls -la ~/.claude/skills/<name>
-# 应输出: -> /Users/.../claude-workflow/skills/<name>
+# ① 看是否项目级生效 (cd 进仓库内开会话)
+ls .claude/skills/<name>/SKILL.md
 
-# ② 确认改的是源不是副本
-realpath ~/.claude/skills/<name>/SKILL.md
-# 应指向仓库, 不是本地
+# ② 看全局副本是否最新 (sync 后)
+cat ~/.claude/skills/<name>/.synced_from
+# 应输出: /Users/.../claude-workflow
+
+diff -q .claude/skills/<name>/SKILL.md ~/.claude/skills/<name>/SKILL.md
+# 没输出 = 已同步; 有 diff = 需要 bash scripts/sync.sh
 
 # ③ 字符预算
-wc -c ~/.claude/skills/<name>/SKILL.md
+wc -c .claude/skills/<name>/SKILL.md
 
 # ④ frontmatter 合法
-python3 /Users/macos/WebProject/claude-workflow/scripts/validate-skill.py \
-  /Users/macos/WebProject/claude-workflow/skills/<name>
+python3 scripts/validate-skill.py .claude/skills/<name>
 
 # ⑤ 2.1.0+ hot-reload 是否启用
 claude --version    # 看版本
@@ -111,8 +130,9 @@ bug #25367 — symlink 的 skill 在 slash-command init 阶段会报 `Unknown sk
 | 工具 | 干啥 |
 |---|---|
 | `wc -c SKILL.md` | 字符预算检测 |
-| `realpath ~/.claude/skills/X/SKILL.md` | 找真源文件 |
+| `cat ~/.claude/skills/X/.synced_from` | 看全局副本是哪个仓库 sync 来的 |
+| `diff -q .claude/skills/X/SKILL.md ~/.claude/skills/X/SKILL.md` | 看仓库 vs 全局是否同步 |
 | `validate-skill.py` | 静态校验 |
-| `install.sh --unlink` | 干净卸载本仓 symlink |
-| `DRY_RUN=1 install.sh` | 看会改啥不真改 |
+| `sync.sh --uninstall` | 移除本仓 sync 过去的副本 |
+| `DRY_RUN=1 sync.sh` | 看会改啥不真改 |
 | `tests/examples/*.md` 手动跑 | 行为回归 |

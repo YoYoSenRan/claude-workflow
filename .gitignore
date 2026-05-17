@@ -1,4 +1,7 @@
 # —— 永不入库 (用户私产 / 凭证 / 运行时) ——
+# sync.sh 在 ~/.claude/<kind>/<name>/.synced_from 写来源标记, 仓库内不该有
+**/.synced_from
+
 # 这些只该出现在 ~/.claude/, 仓库不该有
 .credentials.json
 .claude.json
