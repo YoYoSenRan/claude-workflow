@@ -15,20 +15,25 @@
 优先级: 项目级 > 全局 > plugin
 
 **本仓**:
-- `~/WebProject/claude-workflow/.claude/skills/X/` ← 真源, 开发改这里
+- `~/WebProject/claude-workflow/skills/X/` ← 真源, 编辑这里
+- `~/WebProject/claude-workflow/.claude/skills/X` → `../../skills/X` ← 相对 symlink, 项目级激活点
 - `~/.claude/skills/X/` ← `sync.sh` 拷贝来的副本, 全局生效
+
+**已知噪声 (#25367)** — symlink 的 skill 在 slash-command init 阶段报 `Unknown skill`, 但执行 OK。等 Anthropic 修, 不影响使用。
 
 ## Hot Reload
 
 **Claude Code 2.1.0+ (2026-01-07 发布) 已内置 hot-reload** —
 
 ```
-改 .claude/skills/X/SKILL.md  →  下一条 prompt 即生效 (cd 在仓库内时)
+改 skills/X/SKILL.md  →  下一条 prompt 即生效 (cd 在仓库内, 项目级激活)
 ```
 
 不需要重启会话, 不需要 `/reload`。Claude Code 下次发 prompt 时自动 pick up。
 
-**全局副本 (~/.claude/skills/) 是 sync 来的拷贝**, 改它没意义 — 下次 sync 会覆盖。**真源是仓库 .claude/**。
+**编辑铁律** — 改根目录 `skills/X/` 真源, 不要改:
+- `.claude/skills/X/` (是 symlink, 改了等于改根 skills/, 无差; 但概念混乱)
+- `~/.claude/skills/X/` (是 sync 来的拷贝, 下次 sync 会覆盖)
 
 **例外**: 通过 `/plugin install` 装的 plugin **不享受 hot-reload** (bug #35641 — 必须全重启)。
 

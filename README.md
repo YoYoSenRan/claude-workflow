@@ -15,18 +15,24 @@
 
 ```
 claude-workflow/
-├── .claude/                    项目级源头, cd 进仓库自动加载
-│   ├── skills/                 个人 skill (SKILL.md + references/ + tests/)
-│   ├── agents/                 自定义子代理 (暂空)
-│   └── commands/               slash 命令 (暂空)
+├── skills/                     ✦ 真源 (跟主流仓 obra/daymade 一致)
+│   └── search/                 SKILL.md + references/ + tests/
+├── agents/                     真源 (暂空)
+├── commands/                   真源 (暂空)
+│
+├── .claude/                    项目级激活点, 内容是相对 symlink 指向真源
+│   ├── skills/
+│   │   └── search → ../../skills/search
+│   ├── agents/                 (暂空)
+│   └── commands/               (暂空)
 │
 ├── mcps/                       自写 MCP server (暂空)
 ├── tools/                      CLI 辅助 (暂空)
 │
 ├── scripts/                    仓库管理
-│   ├── sync.sh                 .claude/ → ~/.claude/ 拷贝同步
+│   ├── sync.sh                 skills/agents/commands → ~/.claude/ 拷贝
 │   ├── validate-skill.py       静态校验
-│   └── new-skill.sh            从模板初始化
+│   └── new-skill.sh            建真目录 + .claude/ 相对 symlink
 │
 └── docs/                       项目文档
     ├── conventions.md
@@ -34,14 +40,18 @@ claude-workflow/
     └── debugging.md
 ```
 
+**两个目录的分工** —
+- **根目录 `skills/ agents/ commands/`** = 真源, git 跟踪, 编辑这里
+- **`.claude/skills/...`** = 相对 symlink, 让 Claude Code 进入仓库时项目级加载到真源
+
 ## 开发流程
 
 ```bash
-# 1. cd 进仓库, Claude Code 会自动加载本仓 .claude/skills/
+# 1. cd 进仓库, Claude Code 会自动加载本仓 .claude/skills/ (symlink 透明到 skills/)
 cd ~/WebProject/claude-workflow
 
-# 2. 改 SKILL.md, hot-reload 实时生效 (Claude Code 2.1.0+)
-vim .claude/skills/search/SKILL.md
+# 2. 改真源 (不要改 .claude/skills/, 那是 symlink 入口, 改谁都一样)
+vim skills/search/SKILL.md   # hot-reload 实时生效 (Claude Code 2.1.0+)
 
 # 3. 校验
 python3 scripts/validate-skill.py
@@ -64,17 +74,19 @@ bash scripts/sync.sh --uninstall    # 移除本仓 sync 过去的内容 (识别 
 
 ```bash
 bash scripts/new-skill.sh my-skill
-# 自动建 .claude/skills/my-skill/{SKILL.md, references/, tests/examples/}
+# 自动建:
+#   skills/my-skill/{SKILL.md, references/, tests/examples/}   ← 真源
+#   .claude/skills/my-skill → ../../skills/my-skill            ← 相对 symlink
 # 填 SKILL.md
-python3 scripts/validate-skill.py .claude/skills/my-skill
+python3 scripts/validate-skill.py skills/my-skill
 # 开发期: cd 进仓库测; 稳定后 bash scripts/sync.sh
 ```
 
 ## 校验
 
 ```bash
-python3 scripts/validate-skill.py                       # 全部
-python3 scripts/validate-skill.py .claude/skills/search  # 单个
+python3 scripts/validate-skill.py                # 全部
+python3 scripts/validate-skill.py skills/search  # 单个
 ```
 
 校验项: frontmatter / name 规范 / 字符预算 (<13K) / references 死链 / PII / tests/examples 非空。

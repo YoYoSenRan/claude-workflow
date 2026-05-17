@@ -19,7 +19,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 [[ -d "$REPO_ROOT/.git" ]] || { echo "✗ 须在仓库根目录运行"; exit 1; }
 
-SRC="$REPO_ROOT/.claude"
+# 从根目录的真源同步 (skills/ agents/ commands/), 不走 .claude/ symlink
+SRC="$REPO_ROOT"
 DST="$HOME/.claude"
 DRY_RUN="${DRY_RUN:-0}"
 MODE="sync"
@@ -36,6 +37,12 @@ for arg in "$@"; do
 done
 
 [[ -d "$SRC" ]] || { echo "✗ $SRC 不存在"; exit 1; }
+# 至少要有一个 sync 目标
+has_content=0
+for k in skills agents commands; do
+  [[ -d "$SRC/$k" ]] && [[ -n "$(ls -A "$SRC/$k" 2>/dev/null)" ]] && has_content=1 && break
+done
+[[ "$has_content" == "1" ]] || { echo "✗ skills/agents/commands 都为空, 无内容可 sync"; exit 1; }
 
 SYNC_KINDS=(skills agents commands)
 

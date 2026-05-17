@@ -46,7 +46,7 @@ references/Y.md
 ## 目录布局
 
 ```
-.claude/skills/<name>/
+skills/<name>/
 ├── SKILL.md                 主入口
 ├── references/              细节, Claude 按需读
 │   ├── X.md

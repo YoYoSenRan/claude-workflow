@@ -4,6 +4,27 @@
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-05-17
+
+### 重构 — `skills/` 回根目录 + `.claude/skills/` 相对 symlink
+- 跟主流仓 (obra/superpowers, daymade/claude-code-skills, anthropics/claude-plugins-official) 结构对齐
+- `skills/<name>/` 真源 — git 跟踪, 编辑这里
+- `.claude/skills/<name> → ../../skills/<name>` 相对 symlink, 项目级激活点
+- 跨机 clone 后路径仍然解析 (相对路径不写死绝对位置)
+- 未来发 marketplace plugin 友好 (skills/ 在根是默认期望)
+
+### 调
+- `scripts/sync.sh` SRC 改 `$REPO_ROOT` (从根读 skills/), 不走 .claude/ symlink
+- `scripts/new-skill.sh` 同时建真目录 + 相对 symlink
+- `scripts/validate-skill.py` 扫 `skills/` 而非 `.claude/skills/`
+- 文档全部反映新分工
+
+### 加
+- 各空目录 (`agents/` `commands/` `mcps/` `tools/` `.claude/agents/` `.claude/commands/`) 加 `.gitkeep` 占位
+
+### 已知问题 (#25367 调研已知)
+- per-item symlink 在 slash-command init 阶段报 `Unknown skill` 噪声, 不影响功能, 等 Anthropic 修
+
 ## [0.2.0] — 2026-05-17
 
 ### 重构 — 改用"项目级 + sync 拷贝"双轨, 弃 symlink

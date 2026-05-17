@@ -12,8 +12,8 @@ validate-skill.py — 静态校验 SKILL.md
   7. tests/examples/ 至少 1 个 case
 
 用法:
-  python3 scripts/validate-skill.py                       # 校验所有 .claude/skills/
-  python3 scripts/validate-skill.py .claude/skills/search # 校验单个
+  python3 scripts/validate-skill.py                       # 校验所有 skills/
+  python3 scripts/validate-skill.py skills/search # 校验单个
 """
 
 import re
@@ -120,7 +120,7 @@ def main() -> int:
     if args:
         targets = [Path(a).resolve() for a in args]
     else:
-        skills_root = REPO_ROOT / ".claude" / "skills"
+        skills_root = REPO_ROOT / "skills"
         targets = sorted(skills_root.iterdir()) if skills_root.is_dir() else []
         targets = [t for t in targets if t.is_dir()]
 

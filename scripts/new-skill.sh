@@ -26,14 +26,23 @@ if [[ "$NAME" == *anthropic* || "$NAME" == *claude* ]]; then
 fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SKILL_DIR="$REPO_ROOT/.claude/skills/$NAME"
+SKILL_DIR="$REPO_ROOT/skills/$NAME"
+SYMLINK_PATH="$REPO_ROOT/.claude/skills/$NAME"
 
 if [[ -d "$SKILL_DIR" ]]; then
   echo "✗ 已存在: $SKILL_DIR"
   exit 1
 fi
+if [[ -e "$SYMLINK_PATH" ]]; then
+  echo "✗ symlink 占用: $SYMLINK_PATH"
+  exit 1
+fi
 
 mkdir -p "$SKILL_DIR/references" "$SKILL_DIR/tests/examples"
+mkdir -p "$REPO_ROOT/.claude/skills"
+
+# 建相对 symlink, 让 Claude 项目级加载找到真源
+(cd "$REPO_ROOT/.claude/skills" && ln -s "../../skills/$NAME" "$NAME")
 
 cat > "$SKILL_DIR/SKILL.md" <<EOF
 ---
@@ -104,13 +113,14 @@ cat > "$SKILL_DIR/tests/README.md" <<EOF
 **至少跑 01-basic.md**, 防止回归。
 EOF
 
-echo "✓ created .claude/skills/$NAME/"
+echo "✓ created skills/$NAME/ (真源)"
 echo "  SKILL.md (TODO 待填)"
 echo "  references/"
 echo "  tests/examples/01-basic.md"
+echo "✓ created .claude/skills/$NAME → ../../skills/$NAME (相对 symlink, 项目级激活点)"
 echo
 echo "下一步:"
 echo "  1. 填 SKILL.md frontmatter + 内容"
-echo "  2. python3 scripts/validate-skill.py .claude/skills/$NAME"
+echo "  2. python3 scripts/validate-skill.py skills/$NAME"
 echo "  3. cd 进仓库 / 开新 Claude 会话 — 项目级自动加载, hot-reload 测试"
 echo "  4. 改稳定后: bash scripts/sync.sh — 拷贝到 ~/.claude/ 全局"
