@@ -52,13 +52,14 @@ skills/<name>/
 │   ├── X.md
 │   └── Y.md
 ├── scripts/                 可选: skill 用的 Python/Bash 脚本
-├── assets/                  可选: 模板 / 资源文件
-└── tests/
-    ├── README.md
-    └── examples/
-        ├── 01-basic.md
-        ├── 02-edge-case.md
-        └── ...
+└── assets/                  可选: 模板 / 资源文件
+
+tests/skills/<name>/         ← 测试在顶级 tests 镜像目录
+├── README.md
+└── examples/
+    ├── 01-basic.md
+    ├── 02-edge-case.md
+    └── ...
 ```
 
 ## Frontmatter 之外: SKILL.md 正文结构推荐
@@ -100,6 +101,6 @@ skills/<name>/
 - ❌ name / description 里写 "anthropic" / "claude"
 - ❌ SKILL.md 主体超 13KB
 - ❌ frontmatter 用复杂 YAML 嵌套 (validate-skill.py 只支持 1 层 metadata)
-- ❌ 跳过 tests/examples — 至少 1 个 case
+- ❌ 跳过 tests/skills/<name>/examples — 至少 1 个 case
 - ❌ 在 SKILL.md 写绝对路径 `/Users/<name>/` (会被 PII 扫到)
 - ❌ 直接 symlink 整个 `~/.claude/` 目录 (踩 4 个已知 bug)

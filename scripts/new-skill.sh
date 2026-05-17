@@ -28,6 +28,7 @@ fi
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SKILL_DIR="$REPO_ROOT/skills/$NAME"
 SYMLINK_PATH="$REPO_ROOT/.claude/skills/$NAME"
+TESTS_DIR="$REPO_ROOT/tests/skills/$NAME"
 
 if [[ -d "$SKILL_DIR" ]]; then
   echo "✗ 已存在: $SKILL_DIR"
@@ -37,8 +38,13 @@ if [[ -e "$SYMLINK_PATH" ]]; then
   echo "✗ symlink 占用: $SYMLINK_PATH"
   exit 1
 fi
+if [[ -d "$TESTS_DIR" ]]; then
+  echo "✗ tests 目录已存在: $TESTS_DIR"
+  exit 1
+fi
 
-mkdir -p "$SKILL_DIR/references" "$SKILL_DIR/tests/examples"
+mkdir -p "$SKILL_DIR/references"
+mkdir -p "$TESTS_DIR/examples"
 mkdir -p "$REPO_ROOT/.claude/skills"
 
 # 建相对 symlink, 让 Claude 项目级加载找到真源
@@ -78,7 +84,7 @@ TODO: 列出 phases
 | references/TODO.md | TODO |
 EOF
 
-cat > "$SKILL_DIR/tests/examples/01-basic.md" <<EOF
+cat > "$TESTS_DIR/examples/01-basic.md" <<EOF
 # 01 — 基础触发
 
 ## Trigger Prompt
@@ -98,7 +104,7 @@ cat > "$SKILL_DIR/tests/examples/01-basic.md" <<EOF
 开新 Claude 会话 → 粘 Trigger Prompt → 对照 checklist 打勾
 EOF
 
-cat > "$SKILL_DIR/tests/README.md" <<EOF
+cat > "$TESTS_DIR/README.md" <<EOF
 # Tests for $NAME
 
 每个 case 是一份 markdown checklist。开新 Claude 会话, 粘 Trigger Prompt, 对照 expected 打勾。
@@ -116,7 +122,8 @@ EOF
 echo "✓ created skills/$NAME/ (真源)"
 echo "  SKILL.md (TODO 待填)"
 echo "  references/"
-echo "  tests/examples/01-basic.md"
+echo "✓ created tests/skills/$NAME/ (测试样例, 顶级 tests 镜像根结构)"
+echo "  examples/01-basic.md"
 echo "✓ created .claude/skills/$NAME → ../../skills/$NAME (相对 symlink, 项目级激活点)"
 echo
 echo "下一步:"

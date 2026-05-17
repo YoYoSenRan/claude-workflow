@@ -15,24 +15,29 @@
 
 ```
 claude-workflow/
-├── skills/                     ✦ 真源 (跟主流仓 obra/daymade 一致)
-│   └── search/                 SKILL.md + references/ + tests/
+├── skills/                     ✦ 真源 (SKILL.md + references/)
+│   └── search/
 ├── agents/                     真源 (暂空)
 ├── commands/                   真源 (暂空)
+├── mcps/                       MCP server 代码 (暂空)
+├── tools/                      CLI 辅助 (暂空)
 │
-├── .claude/                    项目级激活点, 内容是相对 symlink 指向真源
-│   ├── skills/
-│   │   └── search → ../../skills/search
+├── .claude/                    项目级激活点 (相对 symlink → 真源)
+│   ├── skills/search → ../../skills/search
 │   ├── agents/                 (暂空)
 │   └── commands/               (暂空)
 │
-├── mcps/                       自写 MCP server (暂空)
-├── tools/                      CLI 辅助 (暂空)
+├── tests/                      ✦ 所有测试集中此处, 镜像根结构
+│   ├── skills/
+│   │   └── search/{README.md, examples/}
+│   ├── agents/                 (暂空)
+│   ├── mcps/                   (暂空)
+│   └── tools/                  (暂空)
 │
 ├── scripts/                    仓库管理
 │   ├── sync.sh                 skills/agents/commands → ~/.claude/ 拷贝
-│   ├── validate-skill.py       静态校验
-│   └── new-skill.sh            建真目录 + .claude/ 相对 symlink
+│   ├── validate-skill.py       静态校验 (含查 tests/skills/<n>/examples/)
+│   └── new-skill.sh            建真目录 + .claude/ symlink + tests/ 同名目录
 │
 └── docs/                       项目文档
     ├── conventions.md

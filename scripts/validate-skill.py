@@ -107,10 +107,10 @@ def check_skill(skill_dir: Path) -> list[str]:
         for hit in re.finditer(pat, raw):
             errors.append(f"含 PII 绝对路径: {hit.group()}")
 
-    # 7. tests/examples/
-    examples_dir = skill_dir / "tests" / "examples"
+    # 7. tests/skills/<name>/examples/ (顶级 tests 目录, 镜像根结构)
+    examples_dir = REPO_ROOT / "tests" / "skills" / skill_dir.name / "examples"
     if not examples_dir.is_dir() or not any(examples_dir.glob("*.md")):
-        errors.append("tests/examples/ 缺或空 (至少 1 个 case)")
+        errors.append(f"tests/skills/{skill_dir.name}/examples/ 缺或空 (至少 1 个 case)")
 
     return [f"  ✗ {e}" for e in errors]
 

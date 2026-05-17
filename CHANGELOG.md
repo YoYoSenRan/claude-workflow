@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-05-17
+
+### 重构 — tests 抽顶级, 镜像根结构
+- `skills/<name>/tests/` → `tests/skills/<name>/` (顶级 tests/ 目录)
+- 同时建 `tests/agents/` `tests/mcps/` `tests/tools/` 占位, 未来加测都进顶级 tests/
+- skills 包内只剩功能内容 (SKILL.md + references/), 不再混测试
+
+### 调
+- `scripts/validate-skill.py` 检查路径改为 `tests/skills/<name>/examples/`
+- `scripts/new-skill.sh` 同时建真目录 + tests 同名目录 + symlink, 三件套
+
+### 改动
+- 文档全部反映 tests 新位置
+
 ## [0.3.0] — 2026-05-17
 
 ### 重构 — `skills/` 回根目录 + `.claude/skills/` 相对 symlink
