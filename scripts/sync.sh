@@ -46,6 +46,10 @@ done
 
 SYNC_KINDS=(skills agents commands)
 
+# using 只走 hook 强注入路径, 不应同步到全局 ~/.claude/skills/
+# 否则全局会被 Claude 二次扫到 → 跟 hook 注入双重激活 → 行为重复
+SYNC_SKIP=("using")
+
 echo "Src: $SRC"
 echo "Dst: $DST"
 echo "Mode: $MODE$([ "$DRY_RUN" = "1" ] && echo " (DRY_RUN)")"
@@ -68,6 +72,17 @@ for kind in "${SYNC_KINDS[@]}"; do
     name="$(basename "$item")"
     item_dst="$dst_dir/$name"
     marker="$item_dst/.synced_from"
+
+    # 跳过 SYNC_SKIP 名单
+    skip=0
+    for s in "${SYNC_SKIP[@]}"; do
+      [[ "$name" == "$s" ]] && skip=1 && break
+    done
+    if [[ "$skip" == "1" ]]; then
+      echo "- $kind/$name (跳过, 见 SYNC_SKIP)"
+      ((skip_count++))
+      continue
+    fi
 
     # ---- uninstall 模式 ----
     if [[ "$MODE" == "uninstall" ]]; then

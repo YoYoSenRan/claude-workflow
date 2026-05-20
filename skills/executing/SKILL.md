@@ -1,14 +1,18 @@
 ---
-name: executing-plans
-description: "已有 writing-plans 产出的计划文件时使用。Load → critical review → TodoWrite checkpoint → 逐任务执行 → 遇 blocker 就停不猜。不适用于: 无计划直接改、临时改动 <5min、跟 subagent-driven-development 平行使用 (二选一)。"
-when_to_use: "执行计划, 开始实现, 按计划做, 跑计划, 实施 plan, execute plan, run plan, implement from plan"
+name: executing
+description: "已有 plan 产出的计划文件、用户要求按计划逐 task 落地时使用。不适用于无计划直接改、临时改动 <5min、subagent 子任务 (已拆好)。"
+when_to_use: "用户原话像 '按 docs/plans/X.md 开始实现'、'按这个 plan 做'、'开始跑计划'、'实施这个任务计划'。"
 metadata:
   version: "0.1.0"
 ---
 
+<SUBAGENT-STOP>
+如果你是被派来执行特定任务的子代理, 跳过此 skill。任务已在主 agent 拆好, 不要再走一遍 Load/Review/TodoWrite 循环。
+</SUBAGENT-STOP>
+
 # 执行实现计划
 
-加载 `writing-plans` 产出的 plan 文件, 评审 → TodoWrite → 逐任务执行 → blockers 就停。
+加载 `plan` 产出的 plan 文件, 评审 → TodoWrite → 逐任务执行 → blockers 就停。
 
 <HARD-GATE>
 遇到 blocker (测试失败 / 依赖缺失 / 指令不清 / 实现跟 plan 不符) → **停**, 报告用户。
@@ -114,11 +118,11 @@ plan 怎么写, 你怎么执行。
 - plan 第 1 step 是"写失败测试" → 老实写, 跑, 看到红
 - plan 没 test step → 不要自己加 (违反 plan 即契约)
 
-要问的: plan 该不该有 test? → 这是 writing-plans 阶段的事, 不归你。
+要问的: plan 该不该有 test? → 这是 plan 阶段的事, 不归你。
 
 ## 前后衔接 (软引用, 不强制)
 
-- **前序**: writing-plans 产出的 `docs/plans/*.md`
+- **前序**: plan 产出的 `docs/plans/*.md`
 - **后续理想**: finishing-a-development-branch (superpowers 同款)
 
 本仓 finishing 暂无, 自己 commit + PR 即可。

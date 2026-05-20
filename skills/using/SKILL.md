@@ -1,7 +1,8 @@
 ---
-name: using-workflow
-description: "本仓 skill / agent / 命令的入口纪律。任何对话开始时灌入,告诉 Claude 如何使用本仓资源。要求在任何回复(含澄清问题)之前先查 skill。"
-when_to_use: "session start, 任何对话开始, before any response, skill 调用, using skills"
+name: using
+description: "claude-workflow 工作流入口纪律。规定 Claude 在任何回复(含澄清问题)之前必须先扫 skill。由 SessionStart hook 强注入,不需要 Claude 主动 invoke。"
+disable-model-invocation: true
+user-invocable: false
 metadata:
   version: "0.1.0"
 ---
@@ -66,13 +67,17 @@ skill 带 checklist? ── 是 ──→ 每项 TodoWrite
 
 多个 skill 都能用时:
 
-1. **流程类 skill 先** — 决定"怎么做"(brainstorming / aligning-intent / planning / debugging)
-2. **实现类 skill 后** — 指导"做什么"(领域特定 skill)
+1. **流程类 skill 先** — 决定"怎么做"(think / plan / executing / debug)
+2. **实现类 skill 后** — 指导"做什么"(领域特定 skill, 本仓暂无)
 
-例:
-- "造个 X" → 先 brainstorming, 再实现类
-- "修 bug" → 先 debugging, 再领域 skill
-- 模糊请求 → 先 aligning-intent, 再下游
+典型路径:
+
+- 模糊请求 → 先 think, 对齐后再选下游
+- 有清晰 spec → plan 产出计划文件
+- 已有计划 → executing 逐 task 跑
+- 跑出 bug / 测试挂 → debug 走 4 阶段
+
+**优先级**: 同时命中多个时, 优先 debug (有失败信号最紧急) > think (模糊) > plan / executing (推进)。
 
 ## 调用方式
 

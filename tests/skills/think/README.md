@@ -1,4 +1,4 @@
-# Tests for `aligning-intent` skill
+# Tests for `think` skill
 
 每个 case 是一份 markdown checklist。开新 Claude 会话, 粘 Trigger Prompt, 对照 expected 打勾。
 
@@ -10,7 +10,7 @@
 
 手动: 逐个开新会话跑各 example。
 
-## 改 `aligning-intent` skill 后
+## 改 `think` skill 后
 
 **至少跑 `01-basic.md`**, 防止回归。
 

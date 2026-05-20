@@ -17,7 +17,6 @@
 **/projects/**/*.txt
 **/todos/
 **/cache/
-**/debug/
 **/file-history/
 **/paste-cache/
 **/session-env/

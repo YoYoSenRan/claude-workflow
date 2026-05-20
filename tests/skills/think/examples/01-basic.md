@@ -10,7 +10,7 @@
 - Claude Code 重启或 hot-reload 已生效
 
 ## Expected Behavior Checklist
-- [ ] 触发: Claude 自动 invoke /aligning-intent skill (不是直接 ls)
+- [ ] 触发: Claude 自动 invoke /think skill (不是直接 ls)
 - [ ] 步 1: Claude 检测到歧义 (此 prompt 含"看下"/"这个" 等指代不明)
 - [ ] 步 2: 暂停, 不调用任何工具 (无 ls / Read / Glob)
 - [ ] 步 3: 复述理解, 1-2 句, 具体不空泛

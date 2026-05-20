@@ -1,7 +1,7 @@
 ---
-name: writing-plans
-description: "用户有清晰需求或 spec 时使用。把需求拆成 bite-sized 任务计划 (2-5 分钟/步), 每步给具体文件 / 代码 / 命令 / 验证。产出 docs/plans/YYYY-MM-DD-<name>.md。不适用于: 一行改动、需求还没定 (先 brainstorming)、已有计划 (走 executing-plans)、subagent 子任务 (已拆好)。"
-when_to_use: "写计划, 拆任务, 任务分解, 实现计划, 拆分需求, 做个 plan, write plan, implementation plan, task breakdown"
+name: plan
+description: "用户有清晰需求或 spec、需要把多步骤工作落到文件 / 代码 / 命令时使用。产出 docs/plans/YYYY-MM-DD-<name>.md。不适用于一行改动、需求未定 (先走 think)、已有计划 (走 executing)、subagent 子任务 (已拆好)。"
+when_to_use: "用户原话像 '写个 X 实现计划'、'拆一下任务'、'按这个 spec 做个 plan'、'怎么实现这个功能'、'帮我做任务分解'。"
 metadata:
   version: "0.1.0"
 ---
@@ -39,7 +39,7 @@ metadata:
 5. **Task 结构** — Files + Steps(checkbox) + 代码 + 命令 + 验证
 6. **占位符扫** — TBD / 模糊词 / "类似..." 全清
 7. **自审** — 覆盖 / gap / 类型一致
-8. **交付** — 给用户审, 提示后续 (executing-plans)
+8. **交付** — 给用户审, 提示后续 (executing)
 
 ## 流程图
 
@@ -155,15 +155,15 @@ Task 模板默认每 task 第 1 步是"写失败测试", 第 2 步实现。
 ```
 写好 → 自审通过 → 给用户审
    ↓ 用户批准
-提示后续: "用 executing-plans skill 执行?"
+提示后续: "用 executing skill 执行?"
 ```
 
 ## 前后衔接 (软引用, 不强制)
 
-- **前序理想**: brainstorming (有 spec 再写 plan)
-- **后续理想**: executing-plans 或 subagent-driven-development
+- **前序**: 需求还没定 → 先走 think 跟用户对齐, 再回来写 plan
+- **后续**: executing 逐 task 跑 (本仓默认路径)
 
-本仓不强制依赖 superpowers, 想要可装。
+本仓不强制依赖 superpowers, 想要更完整流程(brainstorming / subagent-driven-development / TDD)可装。
 
 ## 危险信号
 

@@ -1,4 +1,4 @@
-# Tests for `executing-plans` skill
+# Tests for `executing` skill
 
 每个 case 是一份 markdown checklist。开新 Claude 会话, 粘 Trigger Prompt, 对照 expected 打勾。
 
@@ -12,9 +12,9 @@
 
 ## Pre-condition: 需要 plan 文件
 
-测试前先用 `writing-plans` skill 产一份 plan, 或手写一份 mock plan 放在 `docs/plans/`。
+测试前先用 `plan` skill 产一份 plan, 或手写一份 mock plan 放在 `docs/plans/`。
 
-## 改 `executing-plans` skill 后
+## 改 `executing` skill 后
 
 **至少跑 `01-basic.md`**, 防止回归。
 

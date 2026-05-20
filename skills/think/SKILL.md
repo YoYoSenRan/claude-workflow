@@ -1,7 +1,7 @@
 ---
-name: aligning-intent
-description: "用户 prompt 模糊或有多种合理解读时使用。强制 Claude 暂停 → 复述理解 → 提 W 问题 → 等用户确认 → 再动手。防止做错方向白干。不适用于:清晰命令、subagent 任务、简单事实查询。"
-when_to_use: "模糊请求, 多种解读, 需求对齐, 澄清意图, 帮我看下, 处理一下, 改改, vague prompt, ambiguous request, clarify intent"
+name: think
+description: "用户 prompt 模糊、含指代不明 / 范围模糊 / 多解读 / 高代价决策时使用。不适用于清晰命令(具体文件+具体动作)、subagent 任务、简单事实查询、用户已审批的执行阶段。"
+when_to_use: "用户原话像 '帮我看下'、'处理一下'、'改改'、'优化下'、'重构这块'、'看看这个项目'、'怎么搞这个 bug'。"
 metadata:
   version: "0.1.0"
 ---
@@ -114,7 +114,7 @@ prompt 来
 
 ## 何时不激活
 
-满足以下 → 跳过 aligning-intent:
+满足以下 → 跳过 think:
 
 - prompt 自带具体文件 / 函数 / 行号
 - 重复性命令 (`npm test` / `git status` / 格式化)
