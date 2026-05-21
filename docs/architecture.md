@@ -1,339 +1,346 @@
 # claude-workflow 架构基线
 
-> **本文档作用**：claude-workflow 项目的架构原点。所有 skill 开发、调整、新增必须对照本文。任何与本文冲突的实现都视为偏离方向。
+> **本文档作用：** `claude-workflow` 的架构原点。后续新增、调整、删除任何 skill，都必须先对照本文。
 >
-> **参考来源**：`/Users/macos/WebProject/superpowers` 架构 + 用户个人调整。
+> **参考来源：** `/Users/macos/WebProject/superpowers`、Claude Code 官方 skills / hooks / subagents 文档、用户个人工作流偏好。
 >
-> **修订规则**：本文档变更必须经用户显式确认，不可由 skill 实现侧反向修改架构。
+> **修订规则：** 架构变更必须先显式确认；不能由某个 skill 实现细节反向修改整体架构。
 
 ---
 
-## 0. 设计哲学
+## 0. 项目定位
 
-claude-workflow 是个人开发工作流的行为塑造插件。核心信念：
+`claude-workflow` 是个人使用的 Claude Code 工作流插件。目标不是做公开发布的 `superpowers` fork，而是借鉴 `superpowers` 的行为塑造方法，保留对个人开发最有价值的部分：
 
-1. **流程纪律 > 临场判断**。结构化流程能在长会话中持续生效，临场判断会因压力、疲劳、token 紧张而塌陷。
-2. **HARD-GATE 是载荷不是装饰**。带强压力词的指令块是 superpowers 经 94% PR 拒收率压力测试后沉淀下来的行为塑造手段，不可弱化为"建议"。
-3. **职责单一**。每个 skill 只承担一件事，跨职责必须拆分。
-4. **终态明确**。每个主流程 skill 必须明确"只能跳到下一个 X"，禁止横跳。
-5. **文档为执行而存在**。spec / plan 文档不是产物，是执行输入；不可执行的文档视为失败。
+1. **流程边界清楚**：每个 skill 只负责一个阶段，不把设计、计划、执行、验证混在一起。
+2. **证据优先**：完成、修复、通过测试这类声明必须有新鲜验证证据。
+3. **少而完整**：可以比 `superpowers` 少很多 skill，但留下的 skill 必须能闭环。
+4. **中文表达**：skill 主体用中文；工具名、路径、命令和通用技术术语保留英文。
+5. **个人优先**：不承担多 harness、公开 marketplace、开源贡献规则等包袱。
 
 ---
 
-## 1. 三层 skill 体系
+## 1. 分层架构
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ 第 0 层：元规则层（session-start 自动注入）                     │
-│   skills/using/SKILL.md                                         │
-│   告诉 Claude "skill 体系怎么用"，不参与具体任务路由            │
-└─────────────────────────────────────────────────────────────────┘
-                              │ 注入到 <EXTREMELY_IMPORTANT> 标签
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ 第 0 层：启动与元规则层                                      │
+│   hooks/session-start.js                                     │
+│   skills/using/SKILL.md                                      │
+│   作用：让 agent 知道必须先检查并使用相关 skill              │
+└──────────────────────────────────────────────────────────────┘
+                              │
                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 第 1 层：主流程层（4 个 skill，全部 HARD-GATE）                 │
-│   think → plan → executing                                      │
-│            ↘ debug（独立入口，bug 类任务）                      │
-│   严格顺序，不可跳步，终态固定指向下一 skill                    │
-└─────────────────────────────────────────────────────────────────┘
-                              │ 按需叠加
+┌──────────────────────────────────────────────────────────────┐
+│ 第 1 层：主流程层                                            │
+│   think  ->  plan  ->  executing                             │
+│      \->  debug                                              │
+│   作用：覆盖分析、设计、计划、执行、排错这些高频路径          │
+└──────────────────────────────────────────────────────────────┘
+                              │
                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ 第 2 层：增强层（弱触发，按 prompt 关键词条件性加载）           │
-│   worktree / research / verification / finishing-branch /       │
-│   code-review / 未来按需追加                                    │
-│   由主流程 skill 触发或并行注入，不打断主流程                   │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ 第 2 层：增强层                                              │
+│   verify / finish / review / worktree                        │
+│   作用：完成前验证、分支收尾、评审、隔离工作区                │
+└──────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌──────────────────────────────────────────────────────────────┐
+│ 第 3 层：未来 subagent 层                                    │
+│   agents/ + reviewer prompts + task handoff rules             │
+│   作用：只有配套 agent 真实存在后，才启用完整子代理开发流程   │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### 1.1 层间约束
+### 层间约束
 
-- **第 0 层 → 第 1 层**：using 不路由具体任务，仅告知 Claude "存在 skill 体系，遵守 1% 法则"。所有路由权下放到第 1 层的 think。
-- **第 1 层 内部**：think 是唯一入口，决定路由到 plan/debug/executing/直接执行。plan 终态固定指向 executing。executing/debug 终态自包含。
-- **第 1 层 → 第 2 层**：主流程 skill 在必要时调用增强 skill（如 plan 提示用 worktree、executing 调 verification）。增强 skill 不可反向打断主流程。
+- `using` 只负责元规则，不负责判断“这个任务该用哪个具体 skill”。
+- `think` 负责需求理解、设计判断和复杂任务对齐，但不能阻止分析类任务读取上下文。
+- `plan` 只写可执行计划，不执行计划。
+- `executing` 只按已批准计划执行；遇到计划错误或阻塞就停。
+- `debug` 是 bug / 测试失败 / 异常行为入口，优先找根因，不走普通实现流程。
+- `verify` 是完成声明前的证据门。
+- `finish` 是提交、PR、保留、丢弃等收尾决策门。
+- `review` 和 `worktree` 是增强能力，不应主动打断主流程。
+- subagent 工作流必须等 `agents/` 和 reviewer prompt 真正存在后再启用。
 
 ---
 
-## 2. 第 0 层：元规则层
+## 2. Skill 映射
 
-### 2.1 skills/using/SKILL.md
-
-**唯一文件**：`skills/using/SKILL.md`，约 80 行。
-
-**职责清单**（保留）：
-- 1% 法则——哪怕 1% 可能某 skill 适用就必须 Skill 工具调用
-- SUBAGENT-STOP——子代理派遣时跳过 skill 加载
-- 指令优先级——用户指令 > skill > 默认系统提示
-- 如何调用 Skill 工具
-- 宣告义务——使用 skill 前必须公开宣告"正在使用 X skill 来 Y"
-- TodoWrite 义务——skill 内含 checklist 时为每项落 todo
-
-**禁止职责**（删除）：
-- ❌ PlanMode 前置 think 拦截（路由权归 think）
-- ❌ skill 优先级排序（"Process 先于 Implementation"，归 think）
-- ❌ 入口违规对照表（归 think）
-- ❌ Red Flags 表（归 think 的反模式段）
-
-### 2.2 session-start 注入机制
-
-`hooks/session-start.js` 在 SessionStart 事件触发时把 `skills/using/SKILL.md` 全文读出，包进 `<EXTREMELY_IMPORTANT>` 标签注入到 Claude 上下文。
-
-机制对标 superpowers `hooks/session-start`，差异：
-- 用 Node.js 实现（superpowers 是 bash）
-- 仅 Claude Code 单一 harness（superpowers 多 harness 适配）
-
----
-
-## 3. 第 1 层：主流程层
-
-### 3.1 skill 一览
-
-| skill | 对标 superpowers | 入口条件 | HARD-GATE 锁什么 | 终态指向 |
-|---|---|---|---|---|
-| think | brainstorming | 所有用户 prompt 第一站 | 模糊 prompt 不动工具 | plan / debug / executing / 直接执行 |
-| plan | writing-plans | think 路由（多步骤实现） | 禁 placeholder + 步骤必须可执行 | executing |
-| executing | executing-plans + subagent-driven-development | think 路由 / 已有 plan 文件 | 遇阻即停不拼猜 | 完成或调用增强 skill |
-| debug | systematic-debugging | think 路由（bug 类任务） | 未查根因不动修（Iron Law） | 完成或转 plan（需写修复计划时） |
-
-### 3.2 think skill
-
-**职责**：
-1. 收所有用户 prompt 作为第一站
-2. 扫歧义信号 → 命中即 HARD-GATE 锁住，复述 + W 问题 + 等确认
-3. 不命中 → 直接路由（不进 HARD-GATE）
-4. 复杂任务对齐完成 → 落 spec 到 `docs/specs/YYYY-MM-DD-<topic>.md`
-5. 简单任务对齐完成 → 仅口头对齐，不落盘
-6. 按任务类型路由到下一 skill
-
-**HARD-GATE 内容**：
-```
-检测到 prompt 模糊时，禁止调用任何工具（Read / Edit / Bash / Skill 等），
-禁止做任何"先看一下""先试一下"的探索性动作。
-必须先完成：复述理解 → 提 W 问题 → 等用户确认。
-```
-
-**路由表**（终态）：
-
-| 任务类型 | 下一步 skill | spec 是否落盘 |
+| 本项目 skill | 参考 `superpowers` | 当前定位 |
 |---|---|---|
-| 多步骤实现 / 改多个文件 / 改架构 | plan | ✅ 落 docs/specs/ |
-| 排查 bug / 失败原因 | debug | 视复杂度（一般不落） |
-| 已有计划，本次执行 | executing | 不落 |
-| 单步小改动（1 个文件、几行） | 直接执行 | 不落 |
+| `using` | `using-superpowers` | 启动元规则；由 SessionStart hook 注入 |
+| `think` | `brainstorming` | 分析、设计、需求澄清、方案判断 |
+| `plan` | `writing-plans` | 写可执行实现计划 |
+| `executing` | `executing-plans` | inline 执行已批准计划 |
+| `debug` | `systematic-debugging` | 系统化排错 |
+| `verify` | `verification-before-completion` | 完成声明前验证 |
+| `finish` | `finishing-a-development-branch` | 分支 / 提交 / PR 收尾 |
+| `review` | `requesting-code-review` / `receiving-code-review` | 代码评审和评审反馈处理 |
+| `worktree` | `using-git-worktrees` | 隔离工作区 |
 
-**spec 落盘判定**：think 自决"复杂度"——跨多文件 / 跨多步骤 / 会动架构 = 复杂 → 落 spec。单文件单动作 = 简单 → 不落。
+当前不做完整映射：
 
-### 3.3 plan skill
-
-**职责**：
-1. 读 think 的 spec 文件或当面对齐结果作为输入
-2. 写实现计划，落 `docs/plans/YYYY-MM-DD-<feature>.md`
-3. 自我审查（placeholder 扫描 / 类型一致性 / spec 覆盖）
-4. 可选派遣子代理评审（用 `skills/plan/plan-document-reviewer-prompt.md`）
-5. 终态指向 executing
-
-**HARD-GATE 内容**：
-```
-计划文档中禁止出现 TBD / TODO / "fill in later" / "implement appropriate X" 
-等占位符。每个步骤必须含可执行的代码块或精确命令。
-```
-
-**plan 文档模板**（约束）：
-- 文件结构段（先列出会改/会创建的所有文件）
-- 任务分解（每任务含 Files / Steps / 验证 / Commit）
-- 步骤粒度：2-5 分钟一步（"写失败测试" / "运行验证失败" / "实现" / "运行验证通过" / "提交"）
-- 自审章节
-
-### 3.4 executing skill
-
-**职责**：
-1. 加载 plan 文档
-2. 严格按计划执行
-3. **内嵌子代理决策逻辑**：单文件包含"任务判别 → 简单自做 / 复杂拆子代理 / 多任务并行派遣"
-4. 遇阻即停报告，不拼猜推进
-5. 终态：完成 / 调用增强 skill（verification / finishing-branch）
-
-**HARD-GATE 内容**：
-```
-执行遇到 blocker（依赖缺失 / 测试挂 / 指令不清 / 验证反复失败）时，
-必须停下报告。禁止跳过验证步骤，禁止猜测推进。
-```
-
-**子代理决策表**（内嵌）：
-
-| 任务特征 | 执行方式 |
+| `superpowers` skill | 本项目处理方式 |
 |---|---|
-| 单文件 / 单步骤 / 简单替换 | 主智能体自做 |
-| 跨多文件 / 需独立验证 / 可并行 | 拆给子代理（每任务一个新 agent） |
-| 多个互不依赖任务 | 并行派遣多子代理 |
-| 含 review / audit 性质 | 派遣 reviewer 类子代理 |
+| `subagent-driven-development` | 暂缓。等 `agents/` 和 reviewer prompts 存在后再做。 |
+| `dispatching-parallel-agents` | 暂缓。不在 `executing` 中假装完整支持。 |
+| `test-driven-development` | 不单独做强制 skill；在 `plan` 和 `debug` 中按场景要求测试先行。 |
+| `writing-skills` | 暂不引入。先稳定现有 skill。 |
 
-### 3.5 debug skill
+---
 
-**职责**：
-1. 收 bug / 测试挂 / 异常行为类任务
-2. 强制 4 phases：根因调查 → 假设验证 → 修复 → 防回归
-3. Iron Law 锁——未完成 Phase 1 不可提任何修复
+## 3. 启动机制
 
-**HARD-GATE 内容**：
+`hooks/session-start.js` 在 `SessionStart` 事件触发时读取 `skills/using/SKILL.md`，并通过 `hookSpecificOutput.additionalContext` 注入会话。
+
+约束：
+
+- `using` 必须短小，因为它会进入每个会话上下文。
+- 具体流程细节必须放在对应 skill 中，不塞进 `using`。
+- `using` 不同步到全局 `~/.claude/skills/`，避免 hook 注入和普通 skill 扫描双重触发。
+- hook 失败时可以降级继续，不应阻断会话。
+
+---
+
+## 4. 主流程定义
+
+### 4.1 `using`
+
+职责：
+
+- 告知 agent：任何回复或行动前，先检查是否有相关 skill。
+- 保留 1% 规则、指令优先级、公开宣告、TodoWrite 规则。
+- 说明如何访问 skill。
+
+禁止：
+
+- 不判断具体任务路由。
+- 不写 `think / debug / plan` 的详细流程。
+- 不承载长篇 red flags 或 checklist。
+
+### 4.2 `think`
+
+职责：
+
+- 分析类任务：允许先做只读项目探索，再给判断。
+- 实现类模糊任务：先澄清目的、范围、边界，再进入计划或执行。
+- 复杂实现任务：必要时产出 spec，供 `plan` 使用。
+- 方案判断：给推荐方案、取舍、风险，而不是只列选项。
+
+两种模式：
+
+```text
+分析模式：
+  触发：分析、审查、理解、解释、对比、调研当前项目。
+  允许：读取文件、文档、git 历史、参考项目。
+  禁止：用户未要求实现前编辑文件。
+
+实现意图模式：
+  触发：构建、重构、优化、修改行为、实现功能。
+  范围不清时：先问，不编辑。
+  范围清晰时：可交给 plan 或直接执行小改。
 ```
-未完成 Phase 1（根因调查 + 证据采集），禁止提出任何修复方案。
-症状修复 = 失败。
+
+### 4.3 `plan`
+
+职责：
+
+- 将已确认需求写成可执行计划。
+- 计划必须包含明确文件、步骤、命令和预期输出。
+- 禁止占位符和“参考上面”。
+- 输出路径默认仍为 `docs/plans/YYYY-MM-DD-<name>.md`。
+
+注意：
+
+- 当前仓库 `.gitignore` 有 `**/plans/`，会忽略 `docs/plans/`。后续若继续使用该路径，必须调整 `.gitignore` 或改变计划输出目录。
+- TDD 对代码行为变化是推荐路径；文档、配置、说明类改动可以不写失败测试，但计划必须说明原因。
+- 没有真实 plan-reviewer agent 前，不强制 subagent 评审。
+
+### 4.4 `executing`
+
+职责：
+
+- 读取已批准计划。
+- 执行前做 critical review。
+- 为每个任务建立 TodoWrite。
+- 按计划逐步执行和验证。
+- 遇阻即停，不猜、不改计划、不跳过验证。
+
+当前不承担：
+
+- 不承担完整 subagent-driven-development。
+- 不派不存在的 reviewer agent。
+- 不在没有配套 prompts 的情况下承诺子代理评审。
+
+终态：
+
+- 任务完成 -> 进入 `verify`。
+- 计划有问题 -> 返回 `plan` 或报告用户。
+- 执行阻塞 -> 报告 blocker。
+
+### 4.5 `debug`
+
+职责：
+
+- 处理 bug、测试失败、报错、异常行为。
+- 先根因调查，再模式分析，再最小假设验证，再修复。
+- 没有根因证据前不提修复方案。
+- 修复后必须进入 `verify` 或执行等价的新鲜验证。
+
+---
+
+## 5. 增强层定义
+
+### 5.1 `verify`
+
+目标：禁止无证据完成声明。
+
+规则：
+
+- 声称“完成 / 修好 / 通过 / 可用”前，必须运行能证明该声明的命令或检查。
+- 必须读取完整输出和退出码。
+- 不能用历史输出、推测、子代理报告替代验证。
+
+### 5.2 `finish`
+
+目标：安全地结束一段开发工作。
+
+默认选项：
+
+```text
+1. 提交当前工作
+2. 推送 / 创建 PR
+3. 保留当前分支
+4. 丢弃当前工作
 ```
 
----
+约束：
 
-## 4. 第 2 层：增强层
+- 丢弃工作必须要求用户明确确认。
+- 不主动执行破坏性 git 命令。
+- 不在测试失败时建议合并或 PR。
 
-### 4.1 已存在 / 已计划
+### 5.3 `review`
 
-| skill | 状态 | 对标 superpowers | 触发条件 | 与主流程关系 |
-|---|---|---|---|---|
-| research | ✅ 已存在 | 无（自定） | "搜索 / 调研 / 查文档" 类 prompt | 可被任何主流程 skill 调用 |
-| worktree | 📋 已计划 | using-git-worktrees | "新功能 / 隔离开发 / git worktree" | executing 前置生效 |
+目标：让评审回到工程风险，而不是总结式夸赞。
 
-### 4.2 路线图（按用户优先级）
+规则：
 
-| skill | 对标 superpowers | 触发条件 | 与主流程关系 |
-|---|---|---|---|
-| verification-before-completion | 同名 | executing 完成后 | executing 调用，作为完成前必经步骤 |
-| finishing-branch | finishing-a-development-branch | verification 通过后 | PR / merge / cleanup 选项 |
-| code-review | requesting-code-review + receiving-code-review | PR 前后 | 双向评审，PR 前自检 / PR 后接评审 |
+- Findings 先行。
+- 优先级：bug、行为回归、安全风险、缺失测试。
+- 没问题时明确说没有发现阻塞问题，同时说明剩余风险。
 
-### 4.3 增强 skill 约束
+### 5.4 `worktree`
 
-- 默认**无 HARD-GATE**（弱触发，错触发代价低）
-- 单独例外：涉及安全/不可逆动作的增强 skill 可加 HARD-GATE（如 worktree 防误改主分支）
-- 必须含 SUBAGENT-STOP 块
-- 触发条件写 description 字段，不写流程摘要
+目标：在需要隔离开发时保护当前工作区。
 
----
+规则：
 
-## 5. 文档落盘约定
-
-| 阶段 | 产出 | 路径 | 必落性 |
-|---|---|---|---|
-| think（复杂任务） | spec | `docs/specs/YYYY-MM-DD-<topic>.md` | 默认落 |
-| think（简单任务） | 仅口头对齐 | — | 不落 |
-| plan | 实现计划 | `docs/plans/YYYY-MM-DD-<feature>.md` | 必落 |
-| executing / debug | 不产文档 | — | — |
-| 架构调整 | 本文档 | `docs/architecture.md` | 需用户确认 |
-
-**目录约束**：
-- `docs/specs/` — think 复杂任务输出
-- `docs/plans/` — plan 唯一输出
-- `docs/architecture.md` — 架构原点（本文档）
-- 其他 docs 子目录按需创建，需在本文档补登记
+- 只有功能开发、较大重构、并行任务需要隔离时才触发。
+- 优先尊重当前 harness 的原生工作区机制。
+- 使用 git worktree 前说明路径、分支、清理方式。
 
 ---
 
-## 6. SKILL.md 文件结构标准
+## 6. 文档约定
 
-每个 skill 的 SKILL.md 必须含以下段（按顺序）：
+| 文档 | 作用 | 路径 |
+|---|---|---|
+| 架构基线 | 定义 skill 体系和边界 | `docs/architecture.md` |
+| 测试策略 | 定义如何验证 skill 行为 | `docs/testing.md` |
+| 路线图 | 阶段性改造方案 | `docs/roadmaps/*.md` |
+| spec | 复杂实现任务的需求边界 | `docs/specs/*.md` |
+| plan | 具体实施计划 | `docs/plans/*.md` 或后续确认的新路径 |
+
+`docs/plans/` 当前与 `.gitignore` 冲突，后续必须专项处理。
+
+---
+
+## 7. SKILL.md 标准
+
+每个 `SKILL.md` 至少包含：
 
 ```markdown
 ---
 name: <skill-name>
-description: "<触发条件，不写流程摘要>"
-[when_to_use: "<原话触发模式>"]              # 可选
-[disable-model-invocation: true]              # 仅 using
-[user-invocable: false]                        # 仅 using
+description: "<触发条件>"
+[when_to_use: "<原话触发模式>"]
 ---
 
 <SUBAGENT-STOP>
 如果你是作为子代理被派遣去执行某个具体任务，请跳过此 skill。
 </SUBAGENT-STOP>
 
-[<HARD-GATE>...</HARD-GATE>]                   # 第 1 层全部必有；第 2 层按需
+# <中文标题>
 
-# <skill 中文标题>
+<职责说明>
 
-<一段总述>
+## 何时使用
 
-## 反模式：<最常见借口>                       # 第 1 层必有；第 2 层按需
+## 流程
 
-## 清单                                         # 必有
-1. ...
-2. ...
+## 停止条件
 
-## 流程图                                       # 必有（dot 语法）
-```dot
-digraph skill {
-  ...
-}
+## 验证方式
 ```
 
-## 详细流程                                     # 必有
+主流程 skill 还必须包含：
 
-## 关键原则                                     # 必有
+- hard gate；
+- 反模式；
+- 明确终态；
+- 何时不激活。
 
-## 警示信号                                     # 第 1 层必有
-| 念头 | 现实 |
-
-## 何时不激活                                   # 可选
-```
-
-**强约束**：
-- 终态指向必须在流程图 doublecircle 或文末"过渡到下一 skill"段明示
-- 不允许 placeholder
-- 中文表达，技术术语保留英文
-- 文件大小目标 100-250 行（超 250 行考虑拆 reference 文件）
+增强层 skill 可以更短，但不能是空壳。
 
 ---
 
-## 7. 触发与调用约定
+## 8. 不变式
 
-### 7.1 自动触发（1% 法则）
-
-所有用户 prompt 默认走 think 入口。Claude 收到消息后：
-
-1. 扫 prompt 是否命中任何 skill 触发条件（≥1% 即触发）
-2. 命中 → 调用 Skill 工具加载对应 SKILL.md
-3. 公开宣告"正在使用 X skill 来 Y"
-4. 含 checklist 则 TodoWrite 落地
-5. 严格按 skill 执行
-
-### 7.2 用户显式触发
-
-用户原话含 "用 think / 走 plan / 调 debug" 等明确指令 → 直接走对应 skill，跳过 think 路由判断。
-
-### 7.3 子代理豁免
-
-子代理被派遣执行具体任务时，session-start 注入的 using 内容里的 SUBAGENT-STOP 块生效，跳过所有 skill 加载。子代理只做被派遣的事，不递归走主流程。
+1. `using` 不路由具体任务。
+2. `think` 不阻止分析类任务读取上下文。
+3. `plan` 不执行计划。
+4. `executing` 不擅自改计划。
+5. `debug` 没有根因前不修复。
+6. `verify` 是完成声明前的证据门。
+7. `finish` 不在未确认时执行破坏性动作。
+8. 空壳 skill 不允许同步或发布。
+9. 没有 `agents/` 和 reviewer prompts 时，不声明支持完整 subagent-driven-development。
+10. 架构调整必须先更新本文档。
 
 ---
 
-## 8. 不变式（违反即视为偏离）
+## 9. 与 `superpowers` 的关键差异
 
-1. **using 不路由** — using 内不可出现"模糊时跳 think""bug 时跳 debug"等路由指令
-2. **think 是唯一入口** — 所有用户 prompt 由 think 首接，不可绕过
-3. **plan 终态必为 executing** — 不可指向其他 skill
-4. **HARD-GATE 不可弱化** — 锁的措辞可中文化但不可改成"建议"
-5. **文档必须可执行** — spec / plan 不含 placeholder
-6. **单向链不可横跳** — 主流程 skill 不互调（如 plan 不直接调 debug）
-7. **增强 skill 不打断主流程** — 仅在主流程内被调用，不主动抢入口
-8. **subagent 决策内嵌于 executing** — 不拆独立 skill
-9. **架构变更需用户确认** — 本文档变更不可由 skill 实现侧反向触发
-
----
-
-## 9. 与 superpowers 的差异表
-
-| 维度 | superpowers | claude-workflow | 差异理由 |
-|---|---|---|---|
-| 命名 | brainstorming/writing-plans/executing-plans/systematic-debugging | think/plan/executing/debug | 用户偏好简短中文友好 |
-| 语言 | 英文 | 中文（技术术语保留英文） | 用户母语 |
-| harness 支持 | Claude Code / Cursor / Gemini / Codex 多 | 仅 Claude Code | 个人使用 |
-| using 职责 | 含 skill 优先级 + Red Flags 表（路由相关） | 仅元规则 | think 接管所有路由 |
-| brainstorming 落 spec | 总是落 | 复杂任务才落 | 减少简单任务过度文档化 |
-| subagent 派遣 | dispatching-parallel-agents + subagent-driven-development 两个独立 skill | 嵌入 executing 单文件 | 用户偏好简化 |
-| Visual Companion | 有（浏览器辅助） | 暂无 | 不需要 |
-| 多 harness 整合测试 | 必需 | 不需要 | 单 harness |
-
----
-
-## 10. 变更日志
-
-| 日期 | 变更 | 决策来源 |
+| 维度 | `superpowers` | `claude-workflow` |
 |---|---|---|
-| 2026-05-20 | 初稿创建，锁定三层 skill 体系、4 主流程 HARD-GATE、docs/specs+plans 双目录、subagent 嵌入 executing、未来增强路线图 | 用户对齐会话（本日） |
+| 使用范围 | 公开插件，多 harness | 个人 Claude Code 工作流 |
+| 语言 | 英文 | 中文为主 |
+| skill 数量 | 完整方法论库 | 小集合，逐步补齐 |
+| subagent | 完整子代理开发流程 | 暂缓，等配套 agent 存在 |
+| 测试 | 多层 CLI / 集成测试 | 先做最小静态 + 触发测试 |
+| 发布 | marketplace / release | 本地同步为主 |
+
+---
+
+## 10. 当前改造顺序
+
+1. 恢复本文档和 `docs/testing.md`。
+2. 修正 `using` 和 `think`。
+3. 稳定 `plan`。
+4. 收窄 `executing`。
+5. 调整 `debug`，接入 `verify`。
+6. 补 `verify / finish / review / worktree`。
+7. 加最小自动化测试。
+8. 清理 `scripts/sync.sh` 和 README。
+
+---
+
+## 11. 变更记录
+
+| 日期 | 变更 | 原因 |
+|---|---|---|
+| 2026-05-21 | 重建架构基线，明确个人版边界、分析模式、增强层和 subagent 暂缓策略 | 按 `superpowers` 调研和当前仓库问题重新校准 |

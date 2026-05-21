@@ -37,10 +37,12 @@ metadata:
 3. **TodoWrite 建** — 每任务 = 一项
 4. **逐任务执行**:
    - 标为 in_progress
+   - **判子代理派遣**（见下文"子代理决策"段）
+   - 主智能体自做 / 派遣子代理执行 / 并行派遣多子代理
    - 按步骤走, 验证 expected
    - 标为 completed
 5. **遇阻塞点停** — 不猜不试, 报告用户
-6. **完工** — 全部 done → 提示后续 (finishing)
+6. **完工** — 全部 done → 调用增强 skill (verification-before-completion → finishing-branch) 或交付
 
 ## 流程图
 
@@ -120,12 +122,50 @@ TodoWrite([
 
 要问的: 计划该不该有测试? → 这是计划阶段的事, 不归你。
 
-## 前后衔接 (软引用, 不强制)
+## 子代理决策
+
+每个任务进 in_progress 时, 按下表决定执行方式:
+
+| 任务特征 | 执行方式 |
+|---|---|
+| 单文件 / 单步骤 / 简单替换 / 配置改动 | 主智能体自做 |
+| 跨多文件 / 需独立验证 / 上下文重 | 派遣子代理 (每任务一个新 agent) |
+| 多个互不依赖任务 (任务 N + N+1 没有依赖) | **并行**派遣多个子代理 (单条消息内多 Agent 调用) |
+| 含 review / audit / 安全审计性质 | 派遣 reviewer 类子代理 (caveman:cavecrew-reviewer / security 等) |
+| bug 排查类子任务 | 派遣 debugger 子代理 |
+| 纯查找定位 / 不需修改 | 派遣 Explore / cavecrew-investigator |
+
+**派遣示例** (Agent 工具):
+
+```
+单任务:
+  Agent({ description, subagent_type, prompt })
+
+并行多任务 (单条消息, 多 Agent 调用):
+  Agent({ ... task A ... })
+  Agent({ ... task B ... })
+  Agent({ ... task C ... })
+```
+
+**派遣前必做**:
+
+- prompt 写完整 (子代理不见对话历史): 目标 / 输入 / 期望产出 / 验证方式
+- 标明产出形式 (报告 / diff / 文件列表)
+- 子代理不递归走主流程 (SUBAGENT-STOP 已阻断)
+
+**子代理回报后**:
+
+- 主智能体接回报, 标 task completed
+- 子代理结果不可见用户 → 主智能体复述关键产出
+- 子代理失败 → 按"阻塞点处理"段走
+
+## 前后衔接
 
 - **前序**: 计划产出的 `docs/plans/*.md`
-- **后续**: 全部任务完成 → 跑测试看新鲜证据 + 自己 `git commit` + 提 PR
-
-本仓**不计划补** finishing skill (见 README ROADMAP), 收尾保持轻量, 由你自行做。
+- **后续**: 全部任务完成 → 调用增强 skill (按路线图顺序):
+  - `verification-before-completion` (尚未实现 → 暂自行跑测试 + 自审)
+  - `finishing-branch` (尚未实现 → 暂自行 commit + PR)
+  - 增强 skill 实现前, 收尾保持轻量, 由你自行做
 
 ## 警示信号
 
