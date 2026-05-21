@@ -5,6 +5,7 @@
 ## 用例
 
 - `examples/01-basic.md` — 基础触发：「按 plan 文件实现」是否触发，并走完 critical review → TodoWrite → 逐任务执行
+- `examples/02-chinese-plan-format.md` — 中文 plan 字段格式：确认 `execute` 按 状态 / 涉及文件 / 步骤 / 运行 / 预期 / 验证 / 完成标准 执行
 
 ## 跑全部
 
@@ -12,11 +13,11 @@
 
 ## 前置条件：需要 plan 文件
 
-测试前先用 `plan` skill 产一份 plan，或手写一份 mock plan 放在 `docs/plans/`。
+测试前先用 `plan` skill 产一份 plan，或按 `examples/02-chinese-plan-format.md` 手写 mock plan 放在 `docs/plans/`。
 
 ## 改完 `execute` skill 后
 
-**至少跑 `01-basic.md`**，防止回归。
+**至少跑 `01-basic.md` 和 `02-chinese-plan-format.md`**，防止触发和中文字段格式回归。
 
 特别注意：
 - 反向测试（无 plan / 临时一行改动）：**不应**触发

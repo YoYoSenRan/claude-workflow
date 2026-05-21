@@ -1,8 +1,6 @@
 ---
 name: debug
 description: "遇到 bug、测试失败、报错、构建失败、异常行为时使用；先找根因，再修复，禁止症状级补丁。典型请求：测试挂了、报错了、为什么不工作、修一下 bug、排查问题、构建失败、行为不符合预期。"
-metadata:
-  version: "0.2.0"
 ---
 
 <SUBAGENT-STOP>

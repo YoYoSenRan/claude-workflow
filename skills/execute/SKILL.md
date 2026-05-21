@@ -1,8 +1,6 @@
 ---
 name: execute
 description: "已有书面计划、用户要求按计划执行时使用；只做 inline 执行，不擅自改计划，不假装完整 subagent 工作流。典型请求：按这个计划执行、开始执行计划、实施这个 plan、按 docs/plans/X.md 做、继续任务 N。"
-metadata:
-  version: "0.2.0"
 ---
 
 <SUBAGENT-STOP>
@@ -119,7 +117,7 @@ metadata:
 
 ## 完成条件
 
-一个 Task 完成必须满足：
+一个任务完成必须满足：
 
 - 计划列出的文件已按步骤处理；
 - 计划列出的运行命令已执行；
@@ -127,7 +125,7 @@ metadata:
 - 没有引入计划外变更；
 - TodoWrite 中该任务标为 completed。
 
-全部 Task 完成后：
+全部任务完成后：
 
 - 不直接声称“完成”；
 - 先进入 `verify`，或运行计划指定的最终验证命令；
