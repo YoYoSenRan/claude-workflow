@@ -101,7 +101,7 @@
 
 - `using` 必须短小，因为它会进入每个会话上下文。
 - 具体流程细节必须放在对应 skill 中，不塞进 `using`。
-- `using` 不同步到全局 `~/.claude/skills/`，避免 hook 注入和普通 skill 扫描双重触发。
+- plugin 安装由 Claude Code 读取 `hooks/hooks.json` 和 `skills/`；本仓不再维护全局拷贝脚本。
 - hook 失败时可以降级继续，不应阻断会话。
 
 ---

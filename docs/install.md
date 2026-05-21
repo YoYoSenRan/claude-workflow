@@ -86,6 +86,43 @@ npm run plugin:uninstall-local
 npm run plugin:remove-local-marketplace
 ```
 
+全局 user scope 安装：
+
+```bash
+claude plugin marketplace add https://github.com/YoYoSenRan/claude-workflow.git --scope user
+claude plugin install claude-workflow@yoyosenran-tools --scope user
+```
+
+对应 npm scripts：
+
+```bash
+npm run plugin:add-user
+npm run plugin:install-user
+```
+
+如果要用当前本地仓库作为 user scope marketplace 源：
+
+```bash
+npm run plugin:add-user-local-source
+npm run plugin:install-user
+```
+
+卸载全局 user scope 安装：
+
+```bash
+claude plugin uninstall claude-workflow --scope user
+claude plugin marketplace remove yoyosenran-tools
+```
+
+对应 npm scripts：
+
+```bash
+npm run plugin:uninstall-user
+npm run plugin:remove-user-marketplace
+```
+
+不要同时保留 local 和 user 两份同名 `yoyosenran-tools` marketplace。测试完 local 后先移除，再添加 user scope。
+
 ---
 
 ## 项目级软链接模式

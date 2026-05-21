@@ -79,12 +79,6 @@ for skill in using think plan execute debug verify finish review worktree subage
   fi
 done
 
-if grep -q 'SYNC_KINDS=(skills agents commands hooks)' scripts/sync.sh && grep -q 'SYNC_SKIP=("hooks:hooks.json")' scripts/sync.sh; then
-  ok "sync includes skills and hooks"
-else
-  fail "scripts/sync.sh must sync skills and global hook while skipping plugin hooks.json"
-fi
-
 if grep -q 'META_SKILL' hooks/session-start.js && grep -q "'skills', 'using', 'SKILL.md'" hooks/session-start.js; then
   ok "SessionStart hook references using skill"
 else

@@ -16,9 +16,12 @@
     "plugin:install-local": "claude plugin install claude-workflow@yoyosenran-tools --scope local",
     "plugin:uninstall-local": "claude plugin uninstall claude-workflow --scope local",
     "plugin:remove-local-marketplace": "claude plugin marketplace remove yoyosenran-tools",
+    "plugin:add-user": "claude plugin marketplace add https://github.com/YoYoSenRan/claude-workflow.git --scope user",
+    "plugin:add-user-local-source": "claude plugin marketplace add /Users/macos/WebProject/claude-workflow --scope user",
+    "plugin:install-user": "claude plugin install claude-workflow@yoyosenran-tools --scope user",
+    "plugin:uninstall-user": "claude plugin uninstall claude-workflow --scope user",
+    "plugin:remove-user-marketplace": "claude plugin marketplace remove yoyosenran-tools",
     "plugin:list": "claude plugin list",
-    "plugin:details": "claude plugin details claude-workflow",
-    "sync:dry-run": "DRY_RUN=1 bash scripts/sync.sh",
-    "sync": "bash scripts/sync.sh"
+    "plugin:details": "claude plugin details claude-workflow"
   }
 }

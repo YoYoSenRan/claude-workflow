@@ -89,16 +89,42 @@ npm run plugin:uninstall-local
 npm run plugin:remove-local-marketplace
 ```
 
-### 全局拷贝模式
-
-如果不走 plugin 安装，也可以把当前仓库内容同步到 `~/.claude`：
+全局 user scope 安装：
 
 ```bash
-DRY_RUN=1 bash scripts/sync.sh
-bash scripts/sync.sh
+claude plugin marketplace add https://github.com/YoYoSenRan/claude-workflow.git --scope user
+claude plugin install claude-workflow@yoyosenran-tools --scope user
 ```
 
-`sync.sh` 会同步 `skills/` 和全局需要的 `hooks/session-start.js`。插件专用的 `hooks/hooks.json` 不会同步到全局 hooks 目录。
+对应 npm scripts：
+
+```bash
+npm run plugin:add-user
+npm run plugin:install-user
+```
+
+如果要用当前本地仓库作为 user scope marketplace 源：
+
+```bash
+npm run plugin:add-user-local-source
+npm run plugin:install-user
+```
+
+卸载全局 user scope 安装：
+
+```bash
+claude plugin uninstall claude-workflow --scope user
+claude plugin marketplace remove yoyosenran-tools
+```
+
+对应 npm scripts：
+
+```bash
+npm run plugin:uninstall-user
+npm run plugin:remove-user-marketplace
+```
+
+不要同时保留 local 和 user 两份同名 `yoyosenran-tools` marketplace。测试完 local 后先移除，再添加 user scope。
 
 ## 本仓开发入口
 
@@ -127,7 +153,6 @@ hooks/
   session-start.js
 scripts/
   session-start.js -> ../hooks/session-start.js
-  sync.sh
 skills/
   using/
   think/
@@ -174,12 +199,6 @@ node .claude/hooks/session-start.js
 
 ```bash
 bash tests/static/check-skills.sh
-```
-
-同步前预演：
-
-```bash
-DRY_RUN=1 bash scripts/sync.sh
 ```
 
 ## 设计原则

@@ -113,7 +113,6 @@ bash tests/explicit-skill-requests/run-test.sh
 | `skills/review/SKILL.md` | review prompt，确认 Findings 先行 |
 | `skills/worktree/SKILL.md` | worktree prompt，确认说明路径、分支、状态和清理方式 |
 | `skills/subagent/SKILL.md` | subagent prompt，确认不交出用户确认、收尾和最终完成声明 |
-| `scripts/sync.sh` | `DRY_RUN=1 bash scripts/sync.sh` |
 | `docs/architecture.md` | 静态检查 skill 列表和实际文件一致 |
 
 ---
@@ -198,24 +197,19 @@ TypeError: Cannot read property 'value' of undefined
 
 ---
 
-## 5. 发布 / 同步前检查
+## 5. 发布前检查
 
-同步到全局前至少运行：
+发布或安装前至少运行：
 
 ```bash
 node hooks/session-start.js
 bash tests/static/check-skills.sh
-DRY_RUN=1 bash scripts/sync.sh
+claude plugin validate .claude-plugin/plugin.json
+claude plugin validate .claude-plugin/marketplace.json
 ```
 
-如果存在 Claude CLI，再运行：
+如果存在完整行为测试脚本，再运行：
 
 ```bash
 bash tests/run-all.sh
-```
-
-只有以上检查通过后，才执行真实同步：
-
-```bash
-bash scripts/sync.sh
 ```
