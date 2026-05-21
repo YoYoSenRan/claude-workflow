@@ -9,7 +9,7 @@ user-invocable: false
 如果你是作为子代理被派遣去执行某个具体任务，请跳过此 skill。
 </SUBAGENT-STOP>
 
-# 使用 claude-workflow skills
+# 使用项目级 skills
 
 <EXTREMELY-IMPORTANT>
 收到用户请求后，必须先做最小路由判断。
@@ -20,7 +20,7 @@ user-invocable: false
 ## 指令优先级
 
 1. **用户显式指令**（AGENTS.md、CLAUDE.md、直接请求）优先级最高。
-2. **claude-workflow skills** 覆盖默认模型习惯。
+2. **项目级 skills** 覆盖默认模型习惯。
 3. **默认系统提示** 优先级最低。
 
 如果用户明确要求跳过某个流程，以用户指令为准；但要简短说明风险。

@@ -1,6 +1,8 @@
 {
   "name": "claude-workflow",
-  "version": "0.1.0",
-  "description": "个人 Claude Code 工作流插件 — skill / agent / hook 集合",
-  "hooks": "hooks/hooks.json"
+  "displayName": "Claude Workflow",
+  "description": "Chinese-first Claude Code workflow skills, routing rules, and SessionStart hook.",
+  "author": {
+    "name": "macos"
+  }
 }

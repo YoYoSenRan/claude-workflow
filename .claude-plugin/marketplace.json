@@ -1,0 +1,22 @@
+{
+  "name": "yoyosenran-tools",
+  "owner": {
+    "name": "YoYoSenRan"
+  },
+  "description": "Claude Code workflow plugins by YoYoSenRan.",
+  "plugins": [
+    {
+      "name": "claude-workflow",
+      "source": {
+        "source": "github",
+        "repo": "YoYoSenRan/claude-workflow"
+      },
+      "description": "Chinese-first Claude Code workflow skills, routing rules, and SessionStart hook.",
+      "author": {
+        "name": "macos"
+      },
+      "category": "Productivity",
+      "tags": ["workflow", "skills", "hooks"]
+    }
+  ]
+}

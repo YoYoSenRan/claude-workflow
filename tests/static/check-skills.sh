@@ -65,6 +65,11 @@ done
 
 for skill in using think plan execute debug verify finish review worktree subagent; do
   [[ -d "skills/$skill" ]] || fail "expected skill missing: skills/$skill"
+  if [[ -L ".claude/skills/$skill" ]] && [[ "$(readlink ".claude/skills/$skill")" == "../../skills/$skill" ]]; then
+    ok "project skill link exists: $skill"
+  else
+    fail ".claude/skills/$skill must link to ../../skills/$skill"
+  fi
   [[ -f "tests/skills/$skill/README.md" ]] || fail "tests/skills/$skill/README.md is missing"
   if ! find "tests/skills/$skill/examples" -mindepth 1 -maxdepth 1 -type f -name '*.md' | grep -q .; then
     fail "tests/skills/$skill/examples must contain at least one markdown example"
@@ -74,16 +79,54 @@ for skill in using think plan execute debug verify finish review worktree subage
   fi
 done
 
-if grep -q 'SYNC_SKIP=("using")' scripts/sync.sh; then
-  ok "using is excluded from sync"
+if grep -q 'SYNC_KINDS=(skills agents commands hooks)' scripts/sync.sh && grep -q 'SYNC_SKIP=("hooks:hooks.json")' scripts/sync.sh; then
+  ok "sync includes skills and hooks"
 else
-  fail "scripts/sync.sh must exclude using from normal skill sync"
+  fail "scripts/sync.sh must sync skills and global hook while skipping plugin hooks.json"
 fi
 
 if grep -q 'META_SKILL' hooks/session-start.js && grep -q "'skills', 'using', 'SKILL.md'" hooks/session-start.js; then
   ok "SessionStart hook references using skill"
 else
   fail "hooks/session-start.js must inject skills/using/SKILL.md"
+fi
+
+if [[ -L ".claude/hooks/session-start.js" ]] && [[ "$(readlink .claude/hooks/session-start.js)" == "../../hooks/session-start.js" ]]; then
+  ok "project hook is linked from .claude/hooks"
+else
+  fail ".claude/hooks/session-start.js must link to ../../hooks/session-start.js"
+fi
+
+if grep -q '\${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.js' .claude/settings.json; then
+  ok "project settings use .claude hook path"
+else
+  fail ".claude/settings.json must call \${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.js"
+fi
+
+[[ -f ".claude-plugin/plugin.json" ]] || fail ".claude-plugin/plugin.json is missing"
+[[ -f ".claude-plugin/marketplace.json" ]] || fail ".claude-plugin/marketplace.json is missing"
+if [[ -f "hooks/hooks.json" ]]; then
+  ok "plugin hook config exists at default path"
+else
+  fail "hooks/hooks.json is missing"
+fi
+
+if grep -q '\${CLAUDE_PLUGIN_ROOT}/scripts/session-start.js' hooks/hooks.json; then
+  ok "plugin hooks use CLAUDE_PLUGIN_ROOT scripts path"
+else
+  fail "hooks/hooks.json must call \${CLAUDE_PLUGIN_ROOT}/scripts/session-start.js"
+fi
+
+if [[ -L "scripts/session-start.js" ]] && [[ "$(readlink scripts/session-start.js)" == "../hooks/session-start.js" ]]; then
+  ok "plugin session-start script links to root hook"
+else
+  fail "scripts/session-start.js must link to ../hooks/session-start.js"
+fi
+
+if grep -q '"name": "yoyosenran-tools"' .claude-plugin/marketplace.json && grep -q '"repo": "YoYoSenRan/claude-workflow"' .claude-plugin/marketplace.json; then
+  ok "marketplace manifest points to GitHub plugin source"
+else
+  fail ".claude-plugin/marketplace.json must expose claude-workflow from YoYoSenRan/claude-workflow"
 fi
 
 if [[ "$failures" -gt 0 ]]; then

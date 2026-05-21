@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * SessionStart hook — claude-workflow
+ * SessionStart hook
  *
  * 作用: 在会话 startup / clear / compact 时,把 using meta-skill
  * 的内容注入到 Claude 上下文。单文件 Node.js 实现,真·跨平台
@@ -46,9 +46,9 @@ function main() {
   }
 
   const preamble =
-    '你已激活 claude-workflow 工作流。\n\n' +
+    '已加载项目级 skill 路由规则。\n\n' +
     "**下方是 'using' meta-skill 的全文 — " +
-    "这是你进入本工作流纪律的入口。其他 skill 一律用 'Skill' 工具调用。**\n\n";
+    "这是当前会话的工作流入口。其他 skill 一律用 'Skill' 工具调用。**\n\n";
 
   const sessionContext = '<EXTREMELY_IMPORTANT>\n' + preamble + skillContent + '\n</EXTREMELY_IMPORTANT>';
 
