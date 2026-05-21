@@ -108,6 +108,8 @@ bash tests/explicit-skill-requests/run-test.sh
 | `skills/debug/SKILL.md` | stack trace prompt + 修复后验证 prompt |
 | `skills/verify/SKILL.md` | 完成声明 prompt，确认要求新鲜验证 |
 | `skills/finish/SKILL.md` | 收尾 prompt，确认出现安全选项且丢弃需确认 |
+| `skills/review/SKILL.md` | review prompt，确认 Findings 先行 |
+| `skills/worktree/SKILL.md` | worktree prompt，确认说明路径、分支、状态和清理方式 |
 | `scripts/sync.sh` | `DRY_RUN=1 bash scripts/sync.sh` |
 | `docs/architecture.md` | 静态检查 skill 列表和实际文件一致 |
 

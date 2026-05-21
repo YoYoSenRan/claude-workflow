@@ -332,9 +332,8 @@ description: "<触发条件>"
 3. 稳定 `plan`。
 4. 收窄 `execute`。
 5. 调整 `debug`，接入 `verify`。
-6. 补 `verify / finish / review / worktree`。
-7. 加最小自动化测试。
-8. 清理 `scripts/sync.sh` 和 README。
+6. 加最小自动化测试。
+7. 清理 `scripts/sync.sh` 和 README。
 
 ---
 

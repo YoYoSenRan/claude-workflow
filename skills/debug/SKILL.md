@@ -134,7 +134,7 @@ Phase 4 的新鲜验证是最低要求。只要要对用户说“已修复 / 通
 - 说明关键输出；
 - 说明是否还有失败或未验证项。
 
-未来 `skills/verify/SKILL.md` 存在后，debug 修复完成应转 `verify` 做最终完成门。
+`skills/verify/SKILL.md` 已存在时，debug 修复完成应转 `verify` 做最终完成门。
 
 ---
 
