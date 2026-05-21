@@ -123,10 +123,10 @@ else
   fail "scripts/session-start.js must link to ../hooks/session-start.js"
 fi
 
-if grep -q '"name": "yoyosenran-tools"' .claude-plugin/marketplace.json && grep -q '"repo": "YoYoSenRan/claude-workflow"' .claude-plugin/marketplace.json; then
-  ok "marketplace manifest points to GitHub plugin source"
+if grep -q '"name": "yoyosenran-tools"' .claude-plugin/marketplace.json && grep -q '"source": "./"' .claude-plugin/marketplace.json; then
+  ok "marketplace manifest points to local plugin source"
 else
-  fail ".claude-plugin/marketplace.json must expose claude-workflow from YoYoSenRan/claude-workflow"
+  fail ".claude-plugin/marketplace.json must expose claude-workflow from the marketplace repository root"
 fi
 
 if [[ "$failures" -gt 0 ]]; then

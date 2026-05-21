@@ -33,7 +33,7 @@ claude plugin validate /Users/macos/WebProject/claude-workflow/.claude-plugin/ma
 先添加 marketplace：
 
 ```bash
-claude plugin marketplace add YoYoSenRan/claude-workflow
+claude plugin marketplace add https://github.com/YoYoSenRan/claude-workflow.git
 ```
 
 再安装插件：
@@ -54,6 +54,36 @@ claude plugin details claude-workflow
 ```bash
 claude plugin marketplace update yoyosenran-tools
 claude plugin update claude-workflow
+```
+
+如果只想在本机测试完整安装流程，可以添加本地 marketplace：
+
+```bash
+claude plugin marketplace add /Users/macos/WebProject/claude-workflow
+claude plugin install claude-workflow@yoyosenran-tools --scope local
+```
+
+也可以使用 npm scripts：
+
+```bash
+npm run plugin:add-local
+npm run plugin:install-local
+npm run plugin:list
+npm run plugin:details
+```
+
+卸载本地测试安装：
+
+```bash
+claude plugin uninstall claude-workflow --scope local
+claude plugin marketplace remove yoyosenran-tools
+```
+
+对应 npm scripts：
+
+```bash
+npm run plugin:uninstall-local
+npm run plugin:remove-local-marketplace
 ```
 
 ---

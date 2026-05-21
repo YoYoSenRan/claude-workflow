@@ -72,7 +72,11 @@ for kind in "${SYNC_KINDS[@]}"; do
   dst_dir="$DST/$kind"
 
   [[ -d "$src_dir" ]] || continue
-  mkdir -p "$dst_dir"
+  if [[ "$DRY_RUN" == "1" ]]; then
+    echo "[dry] mkdir -p $dst_dir"
+  else
+    mkdir -p "$dst_dir"
+  fi
 
   for item in "$src_dir"/*; do
     [[ -e "$item" ]] || continue

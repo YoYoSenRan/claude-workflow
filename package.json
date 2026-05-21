@@ -1,0 +1,24 @@
+{
+  "name": "claude-workflow",
+  "private": true,
+  "description": "Chinese-first Claude Code workflow skills, routing rules, and SessionStart hook.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YoYoSenRan/claude-workflow.git"
+  },
+  "license": "MIT",
+  "scripts": {
+    "check": "bash tests/static/check-skills.sh",
+    "validate:plugin": "claude plugin validate .claude-plugin/plugin.json",
+    "validate:marketplace": "claude plugin validate .claude-plugin/marketplace.json",
+    "validate:hook": "node hooks/session-start.js && node scripts/session-start.js && node .claude/hooks/session-start.js",
+    "plugin:add-local": "claude plugin marketplace add /Users/macos/WebProject/claude-workflow --scope local",
+    "plugin:install-local": "claude plugin install claude-workflow@yoyosenran-tools --scope local",
+    "plugin:uninstall-local": "claude plugin uninstall claude-workflow --scope local",
+    "plugin:remove-local-marketplace": "claude plugin marketplace remove yoyosenran-tools",
+    "plugin:list": "claude plugin list",
+    "plugin:details": "claude plugin details claude-workflow",
+    "sync:dry-run": "DRY_RUN=1 bash scripts/sync.sh",
+    "sync": "bash scripts/sync.sh"
+  }
+}
