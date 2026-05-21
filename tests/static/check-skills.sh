@@ -53,6 +53,9 @@ for file in "${skill_files[@]}"; do
   [[ -n "$description" ]] || fail "$file missing frontmatter description"
   [[ "$name" == "$dir_name" ]] || fail "$file name '$name' does not match directory '$dir_name'"
   [[ "$line_count" -gt 20 ]] || fail "$file looks like an empty shell skill ($line_count lines)"
+  if ! grep -Eq '<SUBAGENT-STOP>|^## 子代理辅助模式$' "$file"; then
+    fail "$file missing SUBAGENT-STOP boundary or 子代理辅助模式 section"
+  fi
 done
 
 implemented_skills=()
@@ -60,8 +63,12 @@ for file in "${skill_files[@]}"; do
   implemented_skills+=("$(basename "$(dirname "$file")")")
 done
 
-for skill in using think plan execute debug verify finish review worktree; do
+for skill in using think plan execute debug verify finish review worktree subagent; do
   [[ -d "skills/$skill" ]] || fail "expected skill missing: skills/$skill"
+  [[ -f "tests/skills/$skill/README.md" ]] || fail "tests/skills/$skill/README.md is missing"
+  if ! find "tests/skills/$skill/examples" -mindepth 1 -maxdepth 1 -type f -name '*.md' | grep -q .; then
+    fail "tests/skills/$skill/examples must contain at least one markdown example"
+  fi
   if ! grep -q "| \`$skill\` |" docs/architecture.md; then
     fail "docs/architecture.md does not list skill '$skill' in mapping table"
   fi

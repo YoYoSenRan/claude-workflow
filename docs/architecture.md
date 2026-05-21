@@ -27,7 +27,7 @@
 │ 第 0 层：启动与元规则层                                      │
 │   hooks/session-start.js                                     │
 │   skills/using/SKILL.md                                      │
-│   作用：让 agent 知道必须先检查并使用相关 skill              │
+│   作用：先做入口路由，选择最小足够流程                       │
 └──────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -41,13 +41,13 @@
                               ▼
 ┌──────────────────────────────────────────────────────────────┐
 │ 第 2 层：增强层                                              │
-│   verify / finish / review / worktree                        │
-│   作用：完成前验证、分支收尾、评审、隔离工作区                │
+│   verify / finish / review / worktree / subagent             │
+│   作用：完成前验证、分支收尾、评审、隔离工作区、子代理调度    │
 └──────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌──────────────────────────────────────────────────────────────┐
-│ 第 3 层：未来 subagent 层                                    │
+│ 第 3 层：未来完整子代理流程层                                │
 │   agents/ + reviewer prompts + task handoff rules             │
 │   作用：只有配套 agent 真实存在后，才启用完整子代理开发流程   │
 └──────────────────────────────────────────────────────────────┘
@@ -55,15 +55,15 @@
 
 ### 层间约束
 
-- `using` 只负责元规则，不负责判断“这个任务该用哪个具体 skill”。
+- `using` 负责入口路由和 skill 调用纪律，但不展开具体 skill 的内部流程。
 - `think` 负责需求理解、设计判断和复杂任务对齐，但不能阻止分析类任务读取上下文。
 - `plan` 只写可执行计划，不执行计划。
 - `execute` 只按已批准计划执行；遇到计划错误或阻塞就停。
 - `debug` 是 bug / 测试失败 / 异常行为入口，优先找根因，不走普通实现流程。
 - `verify` 是完成声明前的证据门。
 - `finish` 是提交、PR、保留、丢弃等收尾决策门。
-- `review` 和 `worktree` 是增强能力，不应主动打断主流程。
-- subagent 工作流必须等 `agents/` 和 reviewer prompt 真正存在后再启用。
+- `review`、`worktree` 和 `subagent` 是增强能力，不应主动打断主流程。
+- 当前 `subagent` 只提供调度规则；完整子代理开发流程必须等 `agents/` 和 reviewer prompt 真正存在后再启用。
 
 ---
 
@@ -71,7 +71,7 @@
 
 | 本项目 skill | 参考 `superpowers` | 当前定位 |
 |---|---|---|
-| `using` | `using-superpowers` | 启动元规则；由 SessionStart hook 注入 |
+| `using` | `using-superpowers` | 入口路由和调用纪律；由 SessionStart hook 注入 |
 | `think` | `brainstorming` | 分析、设计、需求澄清、方案判断 |
 | `plan` | `writing-plans` | 写可执行实现计划 |
 | `execute` | `executing-plans` | inline 执行已批准计划 |
@@ -80,13 +80,14 @@
 | `finish` | `finishing-a-development-branch` | 分支 / 提交 / PR 收尾 |
 | `review` | `requesting-code-review` / `receiving-code-review` | 代码评审和评审反馈处理 |
 | `worktree` | `using-git-worktrees` | 隔离工作区 |
+| `subagent` | `dispatching-parallel-agents` / `subagent-driven-development` | 子代理调度规则，不承担完整子代理开发流程 |
 
 当前不做完整映射：
 
 | `superpowers` skill | 本项目处理方式 |
 |---|---|
 | `subagent-driven-development` | 暂缓。等 `agents/` 和 reviewer prompts 存在后再做。 |
-| `dispatching-parallel-agents` | 暂缓。不在 `execute` 中假装完整支持。 |
+| `dispatching-parallel-agents` | 部分吸收到 `subagent` 调度规则；不在 `execute` 中假装完整支持。 |
 | `test-driven-development` | 不单独做强制 skill；在 `plan` 和 `debug` 中按场景要求测试先行。 |
 | `writing-skills` | 暂不引入。先稳定现有 skill。 |
 
@@ -111,13 +112,14 @@
 
 职责：
 
-- 告知 agent：任何回复或行动前，先检查是否有相关 skill。
-- 保留 1% 规则、指令优先级、公开宣告、TodoWrite 规则。
+- 收到用户请求后，先判断请求类型、明确程度和风险。
+- 选择能安全完成任务的最小流程。
+- 明确适用的 skill 必须调用；清晰低风险小改不升级成完整流程。
+- 保留指令优先级、主流程 skill 公开宣告、TodoWrite 规则。
 - 说明如何访问 skill。
 
 禁止：
 
-- 不判断具体任务路由。
 - 不写 `think / debug / plan` 的详细流程。
 - 不承载长篇 red flags 或 checklist。
 
@@ -244,6 +246,17 @@
 - 优先尊重当前 harness 的原生工作区机制。
 - 使用 git worktree 前说明路径、分支、清理方式。
 
+### 5.5 `subagent`
+
+目标：让子代理只承担边界清晰的辅助任务。
+
+规则：
+
+- 只派发独立、具体、可回传证据的任务。
+- 主智能体保留需求确认、计划批准、最终完成声明和收尾决策。
+- 不递归派发子代理。
+- 当前不启用完整 subagent-driven-development。
+
 ---
 
 ## 6. 文档约定
@@ -270,10 +283,6 @@ name: <skill-name>
 description: "<触发条件>"
 ---
 
-<SUBAGENT-STOP>
-如果你是作为子代理被派遣去执行某个具体任务，请跳过此 skill。
-</SUBAGENT-STOP>
-
 # <中文标题>
 
 <职责说明>
@@ -287,6 +296,23 @@ description: "<触发条件>"
 ## 验证方式
 ```
 
+子代理边界二选一：
+
+```markdown
+<SUBAGENT-STOP>
+如果你是作为子代理被派遣去执行某个具体任务，请跳过此 skill。
+</SUBAGENT-STOP>
+```
+
+或：
+
+```markdown
+## 子代理辅助模式
+
+如果你是作为子代理被派遣执行本 skill 对应的辅助任务，可以使用本 skill 的受限模式。
+说明允许做什么，以及禁止替主智能体完成哪些决策或动作。
+```
+
 主流程 skill 还必须包含：
 
 - hard gate；
@@ -296,11 +322,18 @@ description: "<触发条件>"
 
 增强层 skill 可以更短，但不能是空壳。
 
+子代理规则：
+
+- `using`、`execute`、`finish`、`worktree`、`subagent` 使用 `SUBAGENT-STOP`。
+- `think`、`plan`、`debug`、`verify`、`review` 可以写普通的“子代理辅助模式”章节，但必须限制为只读、草案、评审或验证输出。
+- 不自造新的 XML 标签；目前只有 `SUBAGENT-STOP` 继承自 `superpowers` 的 prompt 约定。
+- 子代理不得替主智能体确认需求、批准计划、执行收尾、提交、推送、切换工作区或宣布最终完成。
+
 ---
 
 ## 8. 不变式
 
-1. `using` 不路由具体任务。
+1. `using` 只做入口路由，不承载具体 skill 的内部流程。
 2. `think` 不阻止分析类任务读取上下文。
 3. `plan` 不执行计划。
 4. `execute` 不擅自改计划。
@@ -308,7 +341,7 @@ description: "<触发条件>"
 6. `verify` 是完成声明前的证据门。
 7. `finish` 不在未确认时执行破坏性动作。
 8. 空壳 skill 不允许同步或发布。
-9. 没有 `agents/` 和 reviewer prompts 时，不声明支持完整 subagent-driven-development。
+9. `subagent` 只负责调度规则；没有 `agents/` 和 reviewer prompts 时，不声明支持完整 subagent-driven-development。
 10. 架构调整必须先更新本文档。
 
 ---

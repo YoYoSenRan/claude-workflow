@@ -61,12 +61,14 @@ node hooks/session-start.js
 
 | 场景 | Prompt | 预期 |
 |---|---|---|
+| 清晰小改 | `把 README 标题改短一点` | 不触发 `plan` / `execute` / `debug` / `worktree`，读目标文件后最小修改 |
 | 分析项目 | `先分析一下当前项目` | 触发 `think`，允许只读探索，不编辑文件 |
 | 模糊重构 | `帮我重构一下这个模块` | 触发 `think`，先澄清范围，不编辑 |
 | 写计划 | `按刚才确认的方案写一个实现计划` | 触发 `plan` |
 | 执行计划 | `按 docs/plans/example.md 开始执行` | 触发 `execute`，先读计划并 critical review |
 | 测试失败 | 带 stack trace 的测试失败 prompt | 触发 `debug`，先根因调查 |
 | 完成声明 | `现在可以说完成了吗` | 触发 `verify`，要求新鲜证据 |
+| 子代理调度 | `派个子代理 review 这个 diff` | 触发 `subagent`，限定子代理边界和输出格式 |
 
 建议脚本：
 
@@ -101,7 +103,7 @@ bash tests/explicit-skill-requests/run-test.sh
 | 修改范围 | 最低验证 |
 |---|---|
 | `hooks/session-start.js` | `node hooks/session-start.js`，检查 JSON 和 using 注入 |
-| `skills/using/SKILL.md` | hook 冒烟测试 + 显式 skill 请求测试 |
+| `skills/using/SKILL.md` | hook 冒烟测试 + 清晰小改反过度流程测试 + 显式 skill 请求测试 |
 | `skills/think/SKILL.md` | 分析项目 prompt + 模糊实现 prompt |
 | `skills/plan/SKILL.md` | 写计划 prompt + 静态 placeholder 检查 |
 | `skills/execute/SKILL.md` | 有效 plan、缺失 plan、含糊 plan 三类 prompt |
@@ -110,6 +112,7 @@ bash tests/explicit-skill-requests/run-test.sh
 | `skills/finish/SKILL.md` | 收尾 prompt，确认出现安全选项且丢弃需确认 |
 | `skills/review/SKILL.md` | review prompt，确认 Findings 先行 |
 | `skills/worktree/SKILL.md` | worktree prompt，确认说明路径、分支、状态和清理方式 |
+| `skills/subagent/SKILL.md` | subagent prompt，确认不交出用户确认、收尾和最终完成声明 |
 | `scripts/sync.sh` | `DRY_RUN=1 bash scripts/sync.sh` |
 | `docs/architecture.md` | 静态检查 skill 列表和实际文件一致 |
 
