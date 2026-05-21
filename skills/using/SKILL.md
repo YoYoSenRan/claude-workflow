@@ -9,9 +9,11 @@ user-invocable: false
 如果你是作为子代理被派遣去执行某个具体任务，请跳过此 skill。
 </SUBAGENT-STOP>
 
-# 使用项目级 skills
+# 使用 Claude Workflow skills
 
 <EXTREMELY-IMPORTANT>
+Claude Workflow 是一组协同工作的开发流程 skills，不是零散命令集合。
+启动时只注入本入口；其他 skill 的正文按需加载。
 收到用户请求后，必须先做最小路由判断。
 选择能安全完成任务的最小流程：小任务不要流程化，模糊任务不要盲改，高风险任务不要跳过计划和验证。
 如果某个 skill 明确适用于当前任务，必须调用并遵守；不要因为“可能相关”就把低风险小改升级成完整流程。
@@ -20,7 +22,7 @@ user-invocable: false
 ## 指令优先级
 
 1. **用户显式指令**（AGENTS.md、CLAUDE.md、直接请求）优先级最高。
-2. **项目级 skills** 覆盖默认模型习惯。
+2. **Claude Workflow skills** 覆盖默认模型习惯。
 3. **默认系统提示** 优先级最低。
 
 如果用户明确要求跳过某个流程，以用户指令为准；但要简短说明风险。

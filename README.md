@@ -8,7 +8,7 @@
 
 | Skill | 作用 |
 |---|---|
-| `using` | 会话入口路由规则；由 SessionStart hook 注入，也作为项目级 skill 暴露 |
+| `using` | 会话入口路由规则；由 SessionStart hook 注入，也作为工作流入口 skill 暴露 |
 | `think` | 只读分析、方案判断、模糊需求澄清 |
 | `plan` | 将已确认需求写成可执行计划 |
 | `execute` | 按已批准计划逐步执行，不擅自改计划 |

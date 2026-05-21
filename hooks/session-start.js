@@ -46,7 +46,7 @@ function main() {
   }
 
   const preamble =
-    '已加载项目级 skill 路由规则。\n\n' +
+    '已加载 Claude Workflow skill 路由规则。\n\n' +
     "**下方是 'using' meta-skill 的全文 — " +
     "这是当前会话的工作流入口。其他 skill 一律用 'Skill' 工具调用。**\n\n";
 
