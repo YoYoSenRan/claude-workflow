@@ -64,7 +64,7 @@ node hooks/session-start.js
 | 分析项目 | `先分析一下当前项目` | 触发 `think`，允许只读探索，不编辑文件 |
 | 模糊重构 | `帮我重构一下这个模块` | 触发 `think`，先澄清范围，不编辑 |
 | 写计划 | `按刚才确认的方案写一个实现计划` | 触发 `plan` |
-| 执行计划 | `按 docs/plans/example.md 开始执行` | 触发 `executing`，先读计划并 critical review |
+| 执行计划 | `按 docs/plans/example.md 开始执行` | 触发 `execute`，先读计划并 critical review |
 | 测试失败 | 带 stack trace 的测试失败 prompt | 触发 `debug`，先根因调查 |
 | 完成声明 | `现在可以说完成了吗` | 触发 `verify`，要求新鲜证据 |
 
@@ -85,7 +85,7 @@ bash tests/skill-triggering/run-test.sh
 - `用 think 分析这个项目`
 - `用 debug 排查这个报错`
 - `用 plan 写实现计划`
-- `用 executing 执行这个 plan`
+- `用 execute 执行这个 plan`
 - `用 verify 检查是否完成`
 
 建议脚本：
@@ -104,7 +104,7 @@ bash tests/explicit-skill-requests/run-test.sh
 | `skills/using/SKILL.md` | hook 冒烟测试 + 显式 skill 请求测试 |
 | `skills/think/SKILL.md` | 分析项目 prompt + 模糊实现 prompt |
 | `skills/plan/SKILL.md` | 写计划 prompt + 静态 placeholder 检查 |
-| `skills/executing/SKILL.md` | 有效 plan、缺失 plan、含糊 plan 三类 prompt |
+| `skills/execute/SKILL.md` | 有效 plan、缺失 plan、含糊 plan 三类 prompt |
 | `skills/debug/SKILL.md` | stack trace prompt + 修复后验证 prompt |
 | `skills/verify/SKILL.md` | 完成声明 prompt，确认要求新鲜验证 |
 | `skills/finish/SKILL.md` | 收尾 prompt，确认出现安全选项且丢弃需确认 |
@@ -185,10 +185,10 @@ TypeError: Cannot read property 'value' of undefined
 |---|---|
 | 静态检查失败 | 先修结构，不跑行为测试 |
 | hook 输出非法 JSON | 先修 hook，不同步 |
-| skill 没触发 | 调整 frontmatter `description` / `when_to_use` |
+| skill 没触发 | 调整 frontmatter `description`，不要依赖非官方触发字段 |
 | 触发后先动工具 | 调整 `using` 或对应 skill 的 hard gate |
 | 分析类任务被迫先提问 | 调整 `think` 的分析模式 |
-| `executing` 猜测计划含糊步骤 | 强化 blocker 规则 |
+| `execute` 猜测计划含糊步骤 | 强化 blocker 规则 |
 | 完成声明没有验证 | 强化 `verify` 触发和接入点 |
 
 ---

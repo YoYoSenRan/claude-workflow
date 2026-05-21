@@ -4,13 +4,13 @@
 
 **参考基线：** `/Users/macos/WebProject/superpowers`
 
-**当前问题：** 项目借鉴了 `superpowers` 的外形，但在简化过程中丢掉了关键支撑结构：架构基线文档被删除；`think` 过早禁止读取上下文，导致分析类任务受阻；`executing` 混合了 inline 执行和未完成的 subagent 流程；`review` 和 `worktree` 还是空壳；测试也只有手工 markdown checklist。
+**当前问题：** 项目借鉴了 `superpowers` 的外形，但在简化过程中丢掉了关键支撑结构：架构基线文档被删除；`think` 过早禁止读取上下文，导致分析类任务受阻；`execute` 混合了 inline 执行和未完成的 subagent 流程；`review` 和 `worktree` 还是空壳；测试也只有手工 markdown checklist。
 
 **不做什么：**
 - 不把项目做成公开、多 harness 的通用插件。
 - 不逐字照搬 `superpowers` 的所有 skill。
 - 在缺少必要 agents 和 prompts 前，不加入完整 subagent-driven-development。
-- 本轮不重命名 `executing`；先修行为，命名清理后置。
+- 本轮统一命名为 `execute`，并同步收窄执行职责。
 
 ---
 
@@ -25,7 +25,7 @@
 - 明确稳定主流程：
 
 ```text
-using -> think -> plan -> executing
+using -> think -> plan -> execute
               \-> debug
 
 增强层：
@@ -38,7 +38,7 @@ worktree, review, verify, finish, future subagent flow
 using           ~= using-superpowers
 think           ~= brainstorming
 plan            ~= writing-plans
-executing       ~= executing-plans
+execute         ~= executing-plans
 debug           ~= systematic-debugging
 verify          ~= verification-before-completion
 finish          ~= finishing-a-development-branch
@@ -104,7 +104,7 @@ review          ~= requesting-code-review / receiving-code-review
 
 **文件：**
 - 修改：`skills/plan/SKILL.md`
-- 保留：`skills/plan/plan-document-reviewer-prompt.md`
+- 保留：`skills/plan/references/reviewer.md`
 
 **调整：**
 - 保留严格的“禁止占位符”规则。
@@ -113,7 +113,7 @@ review          ~= requesting-code-review / receiving-code-review
   - 代码行为变化推荐 TDD。
   - 文档和配置类变更不需要失败测试。
   - 如果计划省略测试，必须说明为什么可以省略。
-- 将交付话术从“用 executing 执行”改为“询问用户是否现在执行”。
+- 将交付话术从“用 execute 执行”改为“询问用户是否现在执行”。
 - 在没有真实 plan-reviewer agent 或受支持的 subagent prompt 路径前，不强制派遣评审子代理。当前阶段：
   - 必须自审；
   - subagent 评审只作为可选项，并且依赖环境能力。
@@ -121,18 +121,18 @@ review          ~= requesting-code-review / receiving-code-review
 **验证：**
 - `rg -n "TBD|TODO|FIXME|类似任务|参考上面" skills/plan/SKILL.md`
   - 预期：除反模式说明外，不出现占位符式计划要求。
-- 人工检查：plan 输出路径仍为 `docs/plans/YYYY-MM-DD-<name>.md`。
+- 人工检查：plan 输出路径为 `docs/plans/YYYY-MM-DD-<name>.md`。
 
 ---
 
-## Phase 4：收窄 executing 职责
+## Phase 4：收窄 execute 职责
 
 **文件：**
-- 修改：`skills/executing/SKILL.md`
+- 修改：`skills/execute/SKILL.md`
 - 后续明确处理：`skills/subagent/SKILL.md` 的删除应当是有意识的决策，而不是顺手删除。
 
 **调整：**
-- 将 `executing` 定义为“按书面计划 inline 执行”的 skill。
+- 将 `execute` 定义为“按书面计划 inline 执行”的 skill。
 - 保留实现前 critical review gate。
 - 保留每个任务一条 TodoWrite。
 - 保留遇阻即停。
@@ -283,7 +283,7 @@ Phase 4 通过后，必须用新鲜输出验证原始症状和相关测试命令
 |---|---|
 | skill 规则过长，导致每次会话上下文膨胀 | 保持 `using` 短小；详细规则放进具体 skill 和 supporting files。 |
 | `think` 过严，阻塞正常分析 | 增加明确分析模式，允许只读探索。 |
-| subagent 工作流被写进文档但实际不可用 | 在 `agents/` 和 reviewer prompts 存在前，从 `executing` 中收窄或隔离。 |
+| subagent 工作流被写进文档但实际不可用 | 在 `agents/` 和 reviewer prompts 存在前，从 `execute` 中收窄或隔离。 |
 | 空壳 skill 误导 agent | 扩展 `review` / `worktree`，或从同步范围移除。 |
 | 文档和 skill 名称漂移 | 增加静态测试，检查缺失 skill 引用。 |
 | 测试依赖本地 Claude CLI，容易不稳定 | 拆分静态测试和 Claude 行为测试；缺少 CLI 时跳过行为测试。 |
@@ -295,7 +295,7 @@ Phase 4 通过后，必须用新鲜输出验证原始症状和相关测试命令
 - `docs/architecture.md` 存在，并且和实际 skill 集合一致。
 - 不再存在 3 行空壳 skill。
 - `think` 支持只读项目分析，并且不和自身规则冲突。
-- `executing` 不再声称支持完整 subagent-driven-development，除非配套 agents 已存在。
+- `execute` 不再声称支持完整 subagent-driven-development，除非配套 agents 已存在。
 - `verify` 存在，并成为完成声明前的唯一验证路径。
 - `finish` 存在，且不会在未确认时建议破坏性操作。
 - 静态测试通过。

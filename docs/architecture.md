@@ -33,7 +33,7 @@
                               ▼
 ┌──────────────────────────────────────────────────────────────┐
 │ 第 1 层：主流程层                                            │
-│   think  ->  plan  ->  executing                             │
+│   think  ->  plan  ->  execute                             │
 │      \->  debug                                              │
 │   作用：覆盖分析、设计、计划、执行、排错这些高频路径          │
 └──────────────────────────────────────────────────────────────┘
@@ -58,7 +58,7 @@
 - `using` 只负责元规则，不负责判断“这个任务该用哪个具体 skill”。
 - `think` 负责需求理解、设计判断和复杂任务对齐，但不能阻止分析类任务读取上下文。
 - `plan` 只写可执行计划，不执行计划。
-- `executing` 只按已批准计划执行；遇到计划错误或阻塞就停。
+- `execute` 只按已批准计划执行；遇到计划错误或阻塞就停。
 - `debug` 是 bug / 测试失败 / 异常行为入口，优先找根因，不走普通实现流程。
 - `verify` 是完成声明前的证据门。
 - `finish` 是提交、PR、保留、丢弃等收尾决策门。
@@ -74,7 +74,7 @@
 | `using` | `using-superpowers` | 启动元规则；由 SessionStart hook 注入 |
 | `think` | `brainstorming` | 分析、设计、需求澄清、方案判断 |
 | `plan` | `writing-plans` | 写可执行实现计划 |
-| `executing` | `executing-plans` | inline 执行已批准计划 |
+| `execute` | `executing-plans` | inline 执行已批准计划 |
 | `debug` | `systematic-debugging` | 系统化排错 |
 | `verify` | `verification-before-completion` | 完成声明前验证 |
 | `finish` | `finishing-a-development-branch` | 分支 / 提交 / PR 收尾 |
@@ -86,7 +86,7 @@
 | `superpowers` skill | 本项目处理方式 |
 |---|---|
 | `subagent-driven-development` | 暂缓。等 `agents/` 和 reviewer prompts 存在后再做。 |
-| `dispatching-parallel-agents` | 暂缓。不在 `executing` 中假装完整支持。 |
+| `dispatching-parallel-agents` | 暂缓。不在 `execute` 中假装完整支持。 |
 | `test-driven-development` | 不单独做强制 skill；在 `plan` 和 `debug` 中按场景要求测试先行。 |
 | `writing-skills` | 暂不引入。先稳定现有 skill。 |
 
@@ -155,11 +155,11 @@
 
 注意：
 
-- 当前仓库 `.gitignore` 有 `**/plans/`，会忽略 `docs/plans/`。后续若继续使用该路径，必须调整 `.gitignore` 或改变计划输出目录。
+- `docs/roadmaps/` 用于项目路线图；`docs/plans/` 用于可执行任务计划。
 - TDD 对代码行为变化是推荐路径；文档、配置、说明类改动可以不写失败测试，但计划必须说明原因。
 - 没有真实 plan-reviewer agent 前，不强制 subagent 评审。
 
-### 4.4 `executing`
+### 4.4 `execute`
 
 职责：
 
@@ -253,9 +253,9 @@
 | 测试策略 | 定义如何验证 skill 行为 | `docs/testing.md` |
 | 路线图 | 阶段性改造方案 | `docs/roadmaps/*.md` |
 | spec | 复杂实现任务的需求边界 | `docs/specs/*.md` |
-| plan | 具体实施计划 | `docs/plans/*.md` 或后续确认的新路径 |
+| plan | 具体实施计划 | `docs/plans/*.md` |
 
-`docs/plans/` 当前与 `.gitignore` 冲突，后续必须专项处理。
+本仓库是工作流项目，实际 `docs/plans/` 通常出现在被处理的业务仓库中。
 
 ---
 
@@ -267,7 +267,6 @@
 ---
 name: <skill-name>
 description: "<触发条件>"
-[when_to_use: "<原话触发模式>"]
 ---
 
 <SUBAGENT-STOP>
@@ -303,7 +302,7 @@ description: "<触发条件>"
 1. `using` 不路由具体任务。
 2. `think` 不阻止分析类任务读取上下文。
 3. `plan` 不执行计划。
-4. `executing` 不擅自改计划。
+4. `execute` 不擅自改计划。
 5. `debug` 没有根因前不修复。
 6. `verify` 是完成声明前的证据门。
 7. `finish` 不在未确认时执行破坏性动作。
@@ -331,7 +330,7 @@ description: "<触发条件>"
 1. 恢复本文档和 `docs/testing.md`。
 2. 修正 `using` 和 `think`。
 3. 稳定 `plan`。
-4. 收窄 `executing`。
+4. 收窄 `execute`。
 5. 调整 `debug`，接入 `verify`。
 6. 补 `verify / finish / review / worktree`。
 7. 加最小自动化测试。

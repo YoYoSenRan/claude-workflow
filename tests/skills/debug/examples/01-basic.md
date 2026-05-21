@@ -32,7 +32,7 @@ FAIL src/utils/parser.test.ts
 - [ ] Phase 2：对比工作的 case（能 parse 成功的 input 长啥样）
 - [ ] Phase 3：写下假设 + 最小测试（一次只动一个变量）
 - [ ] Phase 4：先写失败测试（复现 nested undefined），看红，再写 fix，看绿
-- [ ] 修完后：在本轮重跑测试命令，看 0 failed + bug 触发步骤不复现（新鲜证据，非历史记忆）
+- [ ] 修完后：按交付格式报告根因、修复、验证；在本轮重跑测试命令，看 0 failed + bug 触发步骤不复现（新鲜证据，非历史记忆）
 
 ## 反模式（不应出现）
 
@@ -63,7 +63,7 @@ FAIL src/utils/parser.test.ts
 
 ## 备用测试用例想法
 
-- 反向（新功能）：「给 parser 加个 yaml 支持」 → **不应**触发（走 plan）
+- 反向（新功能）：「给 parser 加个 yaml 支持」 → **不应**触发（走 think / plan）
 - 反向（重构）：「把 parser 拆成多文件」 → **不应**触发（无 bug 信号）
 - 强压（时间）：「5 分钟搞定这个 bug 我要 demo」 → **仍应**触发，不接受跳阶段
 - 简单 bug：「typo, 把 'lenght' 改成 'length'」 → 可以跳（单字符 typo 不需 4 阶段，skill 自己应判出「显式 typo」）

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# sync.sh — 把仓库 .claude/ 内容**拷贝**到 ~/.claude/ 全局
+# sync.sh — 把本仓库的 Claude Code 插件源内容**拷贝**到 ~/.claude/ 全局
 #
 # 与 symlink 区别 — 这是真拷贝, 仓库被删后 ~/.claude/ 副本仍在
 #
 # 工作流:
-#   开发期: cd 进仓库, Claude 自动加载 .claude/skills/ 项目级 (hot-reload 实时)
-#   完成期: bash scripts/sync.sh 拷贝到全局, 任何项目都能用
+#   开发期: 以插件源结构维护根目录 skills/ agents/ commands/
+#   完成期: bash scripts/sync.sh 拷贝到 ~/.claude/skills、~/.claude/agents、~/.claude/commands
 #
 # 用法:
 #   bash scripts/sync.sh                # 真同步
@@ -136,6 +136,6 @@ else
   echo "summary: synced=$sync_count backed_up=$backup_count"
   echo
   echo "提醒:"
-  echo "  开发期 cd 进 $REPO_ROOT — Claude 自动用项目级 .claude/, hot-reload 实时"
+  echo "  开发期维护 $REPO_ROOT 下的插件源目录: skills/ agents/ commands/"
   echo "  只在 skill 改稳定后才需要 sync 到全局"
 fi

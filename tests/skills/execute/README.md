@@ -1,4 +1,4 @@
-# `executing` skill 测试
+# `execute` skill 测试
 
 每个用例是一份 markdown 清单。开一个新的 Claude 会话，粘贴触发提示词，对照预期逐项打勾。
 
@@ -14,7 +14,7 @@
 
 测试前先用 `plan` skill 产一份 plan，或手写一份 mock plan 放在 `docs/plans/`。
 
-## 改完 `executing` skill 后
+## 改完 `execute` skill 后
 
 **至少跑 `01-basic.md`**，防止回归。
 
