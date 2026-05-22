@@ -2,7 +2,7 @@
 
 > **本文档作用：** `claude-workflow` 的架构原点。后续新增、调整、删除任何 skill，都必须先对照本文。
 >
-> **参考来源：** `/Users/macos/WebProject/superpowers`、Claude Code 官方 skills / hooks / subagents 文档、用户个人工作流偏好。
+> **参考来源：** Claude Code 官方 skills / hooks / subagents 文档、用户个人工作流偏好。
 >
 > **修订规则：** 架构变更必须先显式确认；不能由某个 skill 实现细节反向修改整体架构。
 
@@ -10,11 +10,11 @@
 
 ## 0. 项目定位
 
-`claude-workflow` 是个人使用的 Claude Code 工作流插件。目标不是做公开发布的 `superpowers` fork，而是借鉴 `superpowers` 的行为塑造方法，保留对个人开发最有价值的部分：
+`claude-workflow` 是个人使用的 Claude Code 工作流插件。核心目标：
 
 1. **流程边界清楚**：每个 skill 只负责一个阶段，不把设计、计划、执行、验证混在一起。
 2. **证据优先**：完成、修复、通过测试这类声明必须有新鲜验证证据。
-3. **少而完整**：可以比 `superpowers` 少很多 skill，但留下的 skill 必须能闭环。
+3. **少而完整**：保留的 skill 必须能闭环，不堆砌冗余流程。
 4. **中文表达**：skill 主体用中文；工具名、路径、命令和通用技术术语保留英文。
 5. **个人优先**：不承担多 harness、公开 marketplace、开源贡献规则等包袱。
 
@@ -48,7 +48,7 @@
                               ▼
 ┌──────────────────────────────────────────────────────────────┐
 │ 第 3 层：受限子代理扫描层                                    │
-│   agents/setup-config, setup-style, setup-domain, setup-rules │
+│   agents/setup-config, setup-conventions, setup-styling, setup-framework, setup-patterns, setup-domain, setup-rules │
 │   作用：只读收集 setup 证据；主智能体仍负责合并和决策         │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -69,30 +69,27 @@
 
 ## 2. Skill 映射
 
-| 本项目 skill | 参考 `superpowers` | 当前定位 |
-|---|---|---|
-| `using` | `using-superpowers` | 入口路由和调用纪律；由 SessionStart hook 注入 |
-| `think` | `brainstorming` | 分析、设计、需求澄清、方案判断 |
-| `plan` | `writing-plans` | 写可执行实现计划 |
-| `execute` | `executing-plans` | inline 执行已批准计划 |
-| `debug` | `systematic-debugging` | 系统化排错 |
-| `test` | `test-driven-development` | 测试策略和回归用例，不强制所有任务 TDD |
-| `verify` | `verification-before-completion` | 完成声明前验证 |
-| `finish` | `finishing-a-development-branch` | 分支 / 提交 / PR 收尾 |
-| `review` | `requesting-code-review` / `receiving-code-review` | 代码评审和评审反馈处理 |
-| `worktree` | `using-git-worktrees` | 隔离工作区 |
-| `subagent` | `dispatching-parallel-agents` / `subagent-driven-development` | 子代理调度规则，不承担完整子代理开发流程 |
-| `skill` | `writing-skills` | 创建、修改和评审 Claude Workflow skill |
-| `setup` | 无直接等价 | 生成当前项目的 Claude Code rules 和领域 skills |
-
-当前不做完整映射：
-
-| `superpowers` skill | 本项目处理方式 |
+| 本项目 skill | 当前定位 |
 |---|---|
-| `subagent-driven-development` | 暂缓。当前只提供 setup 专用只读扫描 agents，不承担完整开发流程。 |
-| `dispatching-parallel-agents` | 部分吸收到 `subagent` 调度规则；不在 `execute` 中假装完整支持。 |
-| `test-driven-development` | 以轻量 `test` skill 吸收；不强制所有任务 TDD。 |
-| `writing-skills` | 以 `skill` skill 吸收；服务本项目 skill 维护。 |
+| `using` | 入口路由和调用纪律；由 SessionStart hook 注入 |
+| `think` | 分析、设计、需求澄清、方案判断 |
+| `plan` | 写可执行实现计划 |
+| `execute` | inline 执行已批准计划 |
+| `debug` | 系统化排错 |
+| `test` | 测试策略和回归用例，不强制所有任务 TDD |
+| `verify` | 完成声明前验证 |
+| `finish` | 分支 / 提交 / PR 收尾 |
+| `review` | 代码评审和评审反馈处理 |
+| `worktree` | 隔离工作区 |
+| `subagent` | 子代理调度规则，不承担完整子代理开发流程 |
+| `skill` | 创建、修改和评审 Claude Workflow skill |
+| `setup` | 生成当前项目的 Claude Code rules、任务 skills 和 references |
+
+当前暂缓事项：
+
+- 完整 subagent-driven-development 流程暂缓。当前只提供 setup 专用只读扫描 agents，不承担完整开发流程。
+- 并行子代理派发部分吸收到 `subagent` 调度规则；不在 `execute` 中假装完整支持。
+- TDD 以轻量 `test` skill 吸收；不强制所有任务 TDD。
 
 ---
 
@@ -284,16 +281,16 @@
 
 ### 5.8 `setup`
 
-目标：把当前项目的真实习惯沉淀成 Claude Code 支持的项目级 rules 和领域 skills。
+目标：把当前项目的真实习惯沉淀成 Claude Code 支持的项目级 rules、任务 skills 和 references。
 
 规则：
 
-- 只生成 Claude Code 支持的内容：`CLAUDE.md`、`.claude/CLAUDE.md`、`.claude/rules/*.md`、`.claude/skills/<name>/SKILL.md` 和 skill references。
+- 只生成 Claude Code 支持或可按需读取的内容：`CLAUDE.md`、`.claude/CLAUDE.md`、`.claude/rules/*.md`、`.claude/references/*.md`、`.claude/skills/<name>/SKILL.md` 和 skill references。
 - 项目入口说明默认优先使用项目根 `CLAUDE.md`；只有项目已有 `.claude/CLAUDE.md` 或用户明确要求时才沿用。
 - 只处理当前项目下的文件，不读取、生成或修改当前项目之外的 Claude 配置。
 - 先只读扫描，再生成候选设计；用户确认后才写入目标项目。
-- rules 只放短、稳定、高频规则；详细示例、证据和报告放领域 skill references。
-- 有证据才生成领域 skill；没有证据就写入 setup report 的未覆盖项。
+- rules 只放短、稳定、高频规则；详细示例、证据和报告放 references。
+- 有证据、明确任务触发和执行顺序才生成 skill；没有生成价值的内容只写入 references 或内部扫描账本。
 - 不把目标项目专属知识写回本插件仓库，除非用户明确初始化本仓。
 
 ---
@@ -364,7 +361,7 @@ description: "<触发条件>"
 
 - `using`、`execute`、`finish`、`worktree`、`subagent` 使用 `SUBAGENT-STOP`。
 - `think`、`plan`、`debug`、`test`、`verify`、`review`、`skill` 可以写普通的“子代理辅助模式”章节，但必须限制为只读、草案、评审或验证输出。
-- 不自造新的 XML 标签；目前只有 `SUBAGENT-STOP` 继承自 `superpowers` 的 prompt 约定。
+- 不自造新的 XML 标签；目前只允许使用 `SUBAGENT-STOP`。
 - 子代理不得替主智能体确认需求、批准计划、执行收尾、提交、推送、切换工作区或宣布最终完成。
 
 ---
@@ -382,21 +379,19 @@ description: "<触发条件>"
 9. 空壳 skill 不允许同步或发布。
 10. `subagent` 只负责调度规则；setup agents 只能只读扫描，不声明支持完整 subagent-driven-development。
 11. `skill` 维护 skill 体系，不替代普通开发流程。
-12. `setup` 生成项目级 rules 和领域 skills，不替代通用 workflow。
+12. `setup` 生成项目级 rules、任务 skills 和 references，不替代通用 workflow。
 13. 架构调整必须先更新本文档。
 
 ---
 
-## 9. 与 `superpowers` 的关键差异
+## 9. 项目边界
 
-| 维度 | `superpowers` | `claude-workflow` |
-|---|---|---|
-| 使用范围 | 公开插件，多 harness | 个人 Claude Code 工作流 |
-| 语言 | 英文 | 中文为主 |
-| skill 数量 | 完整方法论库 | 小集合，逐步补齐 |
-| subagent | 完整子代理开发流程 | setup 只读扫描 agents 已存在；完整开发流程仍暂缓 |
-| 验证 | 多层 CLI / 集成测试 | 只保留 plugin validate + hook 冒烟 |
-| 发布 | marketplace / release | 本地同步为主 |
+- 使用范围：个人 Claude Code 工作流，不做公开插件。
+- 语言：中文为主；工具名、命令、路径保留英文。
+- skill 数量：小集合，逐步补齐；不堆砌方法论。
+- subagent：setup 只读扫描 agents 已存在；完整子代理开发流程仍暂缓。
+- 验证：只保留 plugin validate + hook 冒烟。
+- 发布：本地同步为主。
 
 ---
 
@@ -404,4 +399,4 @@ description: "<触发条件>"
 
 | 日期 | 变更 | 原因 |
 |---|---|---|
-| 2026-05-21 | 重建架构基线，明确个人版边界、分析模式、增强层和 subagent 暂缓策略 | 按 `superpowers` 调研和当前仓库问题重新校准 |
+| 2026-05-21 | 重建架构基线，明确个人版边界、分析模式、增强层和 subagent 暂缓策略 | 按当前仓库问题重新校准 |

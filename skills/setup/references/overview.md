@@ -1,6 +1,6 @@
 # Setup Overview
 
-本参考定义 setup 的总体流程。setup 的目标不是补缺文件，而是给当前项目建立 Claude Code 可用的导航系统：rules 提供持续短规则，领域 skills 提供按需加载的任务入口。
+本参考定义 setup 的总体流程。setup 的目标不是补缺文件，而是给当前项目建立 Claude Code 可用的导航系统：rules 提供持续短规则，skills 提供按需加载的任务能力，references 承载长证据和清单。
 
 ## 推荐生成结构
 
@@ -11,34 +11,31 @@ CLAUDE.md
     00-project.md
     commands.md
     code-style.md
+  references/
+    setup-report.md
+    domains.md
+    habits.md
   skills/
-    context/
-      SKILL.md
-      references/setup-report.md
-      references/domains.md
-      references/habits.md
-    commands/
-      SKILL.md
-    <domain>/
+    <task-or-domain>/
       SKILL.md
       references/examples.md
 ```
 
-只生成有证据支撑的文件。除 `context` 和 `commands` 这类基础入口外，领域 skill 名称必须来自当前项目自己的目录、规则文件、技术栈或业务词汇，不加 `project-` 前缀，也不套固定后台 / 前端模板。
+只生成有证据支撑且能改变模型行为的文件。skill 名称必须来自当前项目真实任务能力、核心框架、工作流程或高频领域，不加 `project-` 前缀，也不套固定后台 / 前端模板。
 
-`context` 是完整 setup 的基础产物，默认生成或刷新，用来保存项目画像、领域索引、覆盖矩阵和 setup report。已有 rules 可以作为它的证据来源，但不能替代它。
+先把项目画像、领域索引、覆盖矩阵和 setup report 写成 references 候选；当它们具备明确“理解项目 / 路由任务 / 选择入口”的任务触发和执行顺序时，再生成对应 skill。
 
-高频开发领域默认生成对应领域 skill，即使已有 rules。已有 rules 越完整，越适合作为领域 skill 的强证据和入口引用。
+高频开发领域先进入深扫候选；当它能让模型知道何时加载、先读什么、怎么改、怎么验证、哪些边界不能碰时，再生成对应 skill。
 
-完整 setup 中，`context` 必须包含 references：
+完整 setup 中，必须形成这些 references 候选：
 
 ```text
-.claude/skills/context/references/setup-report.md
-.claude/skills/context/references/domains.md
-.claude/skills/context/references/habits.md
+.claude/references/setup-report.md
+.claude/references/domains.md
+.claude/references/habits.md
 ```
 
-`context/SKILL.md` 只放摘要和导航，不承载完整报告、领域索引或习惯矩阵。
+如果最终确实生成某个任务 skill，也可以把相关 references 放在该 skill 的 `references/` 下。`SKILL.md` 只放触发、执行顺序和导航，不承载完整报告、领域索引或习惯矩阵。
 
 ## 流程
 
@@ -53,7 +50,7 @@ CLAUDE.md
 9. 每个领域抽取代表样例。
 10. 形成扫描账本，记录已读取、仅发现路径、未检查 / 证据不足。
 11. 按 `coverage.md` 形成覆盖矩阵。
-12. 生成候选 rules 和领域 skills。
+12. 生成候选 rules、skills 和 references。
 13. 用户确认后写入。
 14. 写入后验证结构。
 
@@ -65,8 +62,8 @@ CLAUDE.md
 
 - 把 rules 当作项目显式规则和证据来源；
 - 不重复生成同类 rule；
-- 仍然生成或刷新 `context`；
-- 高频领域生成领域 skill 作为任务入口，引用现有 rules 和 examples；
+- 仍然生成或刷新 setup report、domains、habits 这类 references 候选；
+- 高频领域只有在存在明确任务触发和执行顺序时才生成 skill；
 - 不输出当前项目之外的 Claude 配置信息。
 
 ## 用户可读输出
@@ -110,29 +107,29 @@ CLAUDE.md
 ```markdown
 # Project Instructions
 
-本项目使用 Claude Workflow 生成项目级 rules 和领域 skills。
+本项目使用 Claude Workflow 生成项目级 rules、skills 和 references。
 
 ## 使用规则
 
 - 开始代码任务前，遵守 `.claude/rules/` 中适用规则。
-- 涉及实现、计划、调试、测试时，按任务领域加载最相关的领域 skill。
-- 不要一次性加载全部领域 skills。
+- 涉及实现、计划、调试、测试时，按当前任务加载最相关的项目 skill。
+- 不要一次性加载全部项目 skills。
 - 项目 rules 和本文件优先于通用 workflow 默认建议。
-- 如果领域 skill 与当前代码冲突，先读相似实现，以当前代码为准并说明冲突。
+- 如果项目 skill 与当前代码冲突，先读相似实现，以当前代码为准并说明冲突。
 
 ## 常用入口
 
-- `context`：项目结构、技术栈和领域索引。
-- `commands`：常用命令和验证方式。
-- 其他领域 skill 使用当前项目自己的名称，例如 `components`、`store`、`platform`。
+- 项目画像和领域索引：见 `.claude/references/domains.md`。
+- 命令和验证方式：见 `.claude/references/setup-report.md` 或独立命令 reference。
+- 任务 skill 使用当前项目自己的名称，例如核心框架、装修、发布、组件等真实任务入口。
 ```
 
 如果项目已有 `CLAUDE.md` 或 `.claude/CLAUDE.md`，优先追加“使用规则”小节；不要覆盖原内容。
 
 ## Setup Report
 
-setup report 放在 `.claude/skills/context/references/setup-report.md`。
-习惯矩阵放在 `.claude/skills/context/references/habits.md`；setup report 只摘要引用它。
+setup report 默认放在 `.claude/references/setup-report.md`。
+习惯矩阵默认放在 `.claude/references/habits.md`；setup report 只摘要引用它。
 
 模板：
 

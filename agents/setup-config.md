@@ -1,6 +1,6 @@
 ---
 name: setup-config
-description: "Use proactively during setup. Read project configuration, scripts, CI, build, env, and validation commands, then return evidence for command-related rules or skills."
+description: "Use proactively during setup. Read project configuration, scripts, CI, build, env, and validation commands, then return evidence for command rules, verification workflows, or references."
 tools: Read, Glob, Grep
 model: inherit
 ---
@@ -25,11 +25,17 @@ model: inherit
 只返回这个表格：
 
 ```markdown
-| 类型 | 候选名称 | 观察结果 | 证据文件 | 强度 | 建议落点 |
-|---|---|---|---|---|---|
+| 发现 | 强度 | 影响范围 | 任务触发 | 产物建议 | 生成理由 | 证据文件 |
+|---|---|---|---|---|---|---|
 ```
 
 强度只能是：强规则 / 稳定习惯 / 内部观察 / 不采用。
+
+产物建议只能是：rule / skill / reference / internal。
+
+影响范围只能是：全项目 / 某技术层 / 某核心框架 / 单业务域。
+
+`生成理由` 必须说明这个发现如何帮助模型工作，例如防止改错、少问路、写得像项目、正确验证、降低重复扫描成本。不能只写“项目存在该命令”。
 
 ## 边界
 

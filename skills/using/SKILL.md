@@ -39,7 +39,7 @@ Claude Workflow 是一组协同工作的开发流程 skills，不是零散命令
 
 1. 先判断请求类型、明确程度和风险。
 2. 选择最小足够流程。
-3. 涉及代码实现、计划、调试或测试时，先检查当前项目是否有适用的项目级 rules 或领域 skills。
+3. 涉及代码实现、计划、调试或测试时，先检查当前项目是否有适用的项目级 rules、skills 或 references。
 4. 如果某个 skill 明确适用，先调用 `Skill` 工具并按原文执行。
 5. 调用主流程 skill 时公开说明：`正在使用 <skill> 来 <目的>`。
 6. 轻量小改只需简短说明正在做什么，不展开完整流程话术。
@@ -63,7 +63,7 @@ Claude Workflow 是一组协同工作的开发流程 skills，不是零散命令
 | 隔离工作区 | 使用 `worktree` |
 | 子代理调度 | 使用 `subagent` |
 | 创建 / 修改 workflow skill | 使用 `skill` |
-| 初始化项目 rules / 领域 skills | 使用 `setup` |
+| 初始化项目 rules / skills / references | 使用 `setup` |
 
 轻量小改通常满足：
 
@@ -83,13 +83,13 @@ Claude Workflow 是一组协同工作的开发流程 skills，不是零散命令
 
 如果当前项目存在 `CLAUDE.md`、`.claude/CLAUDE.md` 或 `.claude/rules/`，它们是项目级持续规则，优先于通用 workflow 默认建议。
 
-如果当前项目存在 `.claude/skills/` 下由 setup 生成的领域 skills：
+如果当前项目存在 `.claude/skills/` 下由 setup 生成的项目 skills：
 
-- 涉及代码实现、计划、调试、测试前，加载当前任务最相关的领域 skill；
-- 不要一次性加载全部领域 skills；
-- `context` 用于理解项目整体；
-- `commands` 用于选择验证命令；
-- 其他领域 skill 按项目自己的词汇命名，例如 `components`、`store`、`platform`、`brand`，只在相关任务中加载。
+- 先按实际存在的 `.claude/skills/*/SKILL.md` 名称匹配当前任务；
+- 只加载当前任务最相关的 skill；
+- 找不到匹配 skill 时，改读适用的 `.claude/rules/` 和 `.claude/references/`；
+- 项目画像、命令矩阵、扫描报告优先按 reference 处理；
+- skill 按项目自己的真实任务能力命名，例如核心框架、装修、发布、组件、验证等。
 
 ## 警示信号
 
