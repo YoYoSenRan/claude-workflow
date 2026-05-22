@@ -285,12 +285,23 @@
 
 规则：
 
-- 只生成 Claude Code 支持或可按需读取的内容：`CLAUDE.md`、`.claude/CLAUDE.md`、`.claude/rules/*.md`、`.claude/references/*.md`、`.claude/skills/<name>/SKILL.md` 和 skill references。
+- 只生成 Claude Code 原生识别的内容：`CLAUDE.md`、`.claude/CLAUDE.md`、`.claude/rules/*.md`、`.claude/skills/<name>/SKILL.md`、`.claude/skills/<name>/references/*.md`。
+- 不同路径加载方式不同，setup 必须按下表分配产物：
+
+| 路径 | 加载方式 |
+|---|---|
+| `CLAUDE.md` / `.claude/CLAUDE.md` | 启动自动加载全文 |
+| `.claude/rules/*.md` | 自动加载；`paths:` frontmatter 可按路径触发 |
+| `.claude/skills/<name>/SKILL.md` | 描述自动注入；调用时加载全文 |
+| `.claude/skills/<name>/references/*.md` | 不自动加载；对应 SKILL.md 主动 Read |
+
+- **不使用** `.claude/references/*.md` 全局路径。所有 reference 必须归属某个 skill，放在该 skill 的 `references/` 子目录。
 - 项目入口说明默认优先使用项目根 `CLAUDE.md`；只有项目已有 `.claude/CLAUDE.md` 或用户明确要求时才沿用。
 - 只处理当前项目下的文件，不读取、生成或修改当前项目之外的 Claude 配置。
 - 先只读扫描，再生成候选设计；用户确认后才写入目标项目。
-- rules 只放短、稳定、高频规则；详细示例、证据和报告放 references。
-- 有证据、明确任务触发和执行顺序才生成 skill；没有生成价值的内容只写入 references 或内部扫描账本。
+- rules 只放短、稳定、高频规则；详细示例、证据和报告放 `.claude/skills/<skill>/references/` 下。
+- 有证据、明确任务触发和执行顺序才生成 skill；没有生成价值的内容只写入扫描账本。
+- 没有 skill 归属的长内容，重新判断是 rule、CLAUDE.md 内容还是降级 internal，不允许写入任何 `.claude/references/*` 全局路径。
 - 不把目标项目专属知识写回本插件仓库，除非用户明确初始化本仓。
 
 ---
@@ -331,7 +342,22 @@ description: "<触发条件>"
 ## 验证方式
 ```
 
-子代理边界二选一：
+### 7.1 可选 frontmatter 字段
+
+Claude Code 官方 frontmatter 字段除 `name` 和 `description` 外还有 `allowed-tools`、`paths`、`when_to_use`、`disable-model-invocation`、`user-invocable`、`model`、`effort`、`context`、`agent`、`hooks`、`argument-hint`、`arguments` 等。本项目刻意未使用的字段：
+
+| 字段 | 不使用的原因 |
+|---|---|
+| `paths` | workflow skill 按用户意图触发，非按文件路径；只允许 `setup` 等明确项目操作的 skill 在需要时启用 |
+| `when_to_use` | 与中文 `description` 表达力重叠，刻意只用 `description` 一处 |
+| `disable-model-invocation` / `user-invocable` | 仅 `using` skill 使用（与 SessionStart hook 配套，防止重复加载） |
+| `context: fork` / `agent` | 当前不启用 skill 内联派出子代理；与 `subagent` skill 调度规则分离 |
+| `model` / `effort` | 不在 skill 层固定模型；用户在会话层选择 |
+| `allowed-tools` | 仅在风险低、调用频繁的 read-only skill 启用（当前 `setup`） |
+
+### 7.2 子代理边界
+
+二选一：
 
 ```markdown
 <SUBAGENT-STOP>
@@ -347,6 +373,10 @@ description: "<触发条件>"
 如果你是作为子代理被派遣执行本 skill 对应的辅助任务，可以使用本 skill 的受限模式。
 说明允许做什么，以及禁止替主智能体完成哪些决策或动作。
 ```
+
+**重要提示**：`<SUBAGENT-STOP>` 和 `## 子代理辅助模式` 是写给**主智能体**读的护栏（主智能体决定是否把 skill 内容拼到子代理 prompt 里），而**不是**子代理启动时自动读取的开关。Claude Code 官方 subagent 启动时只接收自己的系统提示和初始 prompt，不会自动加载主会话的 workflow skill。这两个章节属于纪律性约定，不是平台 enforcement。
+
+要真正硬强制，需要用 [hooks](https://code.claude.com/docs/en/hooks)（`PreToolUse` / `SubagentStart` 等）在工具调用前后拦截，本项目目前未启用。
 
 主流程 skill 还必须包含：
 

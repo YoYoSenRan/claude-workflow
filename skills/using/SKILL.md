@@ -87,7 +87,7 @@ Claude Workflow 是一组协同工作的开发流程 skills，不是零散命令
 
 - 先按实际存在的 `.claude/skills/*/SKILL.md` 名称匹配当前任务；
 - 只加载当前任务最相关的 skill；
-- 找不到匹配 skill 时，改读适用的 `.claude/rules/` 和 `.claude/references/`；
+- 找不到匹配 skill 时，改读适用的 `.claude/rules/`；reference 由对应 skill 自己 Read；
 - 项目画像、命令矩阵、扫描报告优先按 reference 处理；
 - skill 按项目自己的真实任务能力命名，例如核心框架、装修、发布、组件、验证等。
 

@@ -1,6 +1,6 @@
 ---
 name: setup-styling
-description: "Use proactively during setup when a project has CSS, SCSS, LESS, Sass, Stylus, component style blocks, CSS modules, utility CSS, or design tokens. Deep-scan stylesheet conventions, BEM naming, nesting, property order, units, responsive rules, and fallback styling baseline."
+description: "setup 流程深扫时使用：项目存在 CSS/SCSS/LESS/Sass/Stylus、组件 style、CSS Modules、utility CSS 或 design tokens 时调研样式规范——BEM、嵌套、属性顺序、单位、响应式。"
 tools: Read, Glob, Grep
 model: inherit
 ---
@@ -10,6 +10,8 @@ model: inherit
 你是 setup 的只读样式规范深扫子代理。你的任务是判断当前项目是否已经有稳定、严格、可沉淀的样式规范；如果项目现状松散或互相冲突，就给出应落地的严格默认规范。
 
 只读扫描，不修改文件，不生成 `.claude/` 内容，不做最终决策。
+
+会话启动时已加载的 CLAUDE.md、AGENTS.md、`.claude/rules/*.md` 只能作为对照线索；判断依据必须以你实际读取过的样式文件为准，不允许仅凭已注入规则得出结论。
 
 ## 扫描范围
 

@@ -79,7 +79,7 @@
 | 强度 | 判断条件 | 允许动作 |
 |---|---|---|
 | 强规则 | 明确文档要求，或 3 个以上一致实现 | 可写入 `.claude/rules/*.md` 或领域 skill 执行规则 |
-| 稳定习惯 | 2-5 个样例基本一致，但没有文档明说 | 写入 `.claude/references/habits.md` 或相关 skill 的 `references/examples.md` |
+| 稳定习惯 | 2-5 个样例基本一致，但没有文档明说 | 写入 `.claude/skills/<skill>/references/<file>.md`（文件名按内容定，例如 `habits.md`、`examples.md`） |
 | 内部观察 | 只有 1 个样例，或样例互相冲突 | 只放内部扫描账本，不默认展示给用户 |
 | 不采用 | 来自生成文件、废弃目录、测试夹具、临时代码 | 不写入任何产物 |
 
@@ -91,7 +91,7 @@
 |---|---|
 | 跨领域、短、高频、稳定 | `.claude/rules/*.md` |
 | 只影响某个领域的写法 | `.claude/skills/<domain>/references/examples.md` |
-| 项目整体画像、习惯矩阵 | `.claude/references/habits.md` |
+| 项目整体画像、习惯矩阵 | `.claude/skills/<skill>/references/habits.md`；无 skill 归属则降级 internal |
 | 命令和验证选择 | 命令 reference、验证 rule；只有存在任务流程时才生成验证类 skill |
 | 不稳定或证据少 | 只留内部扫描账本 |
 

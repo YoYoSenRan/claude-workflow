@@ -11,14 +11,14 @@ CLAUDE.md
     00-project.md
     commands.md
     code-style.md
-  references/
-    setup-report.md
-    domains.md
-    habits.md
   skills/
     <task-or-domain>/
       SKILL.md
-      references/examples.md
+      references/
+        examples.md
+        setup-report.md
+        domains.md
+        habits.md
 ```
 
 只生成有证据支撑且能改变模型行为的文件。skill 名称必须来自当前项目真实任务能力、核心框架、工作流程或高频领域，不加 `project-` 前缀，也不套固定后台 / 前端模板。
@@ -27,15 +27,15 @@ CLAUDE.md
 
 高频开发领域先进入深扫候选；当它能让模型知道何时加载、先读什么、怎么改、怎么验证、哪些边界不能碰时，再生成对应 skill。
 
-完整 setup 中，必须形成这些 references 候选：
+完整 setup 中，必须形成 setup report、domains、habits 这三类 references 候选。它们必须归属某个 skill，放在该 skill 的 `references/` 下：
 
 ```text
-.claude/references/setup-report.md
-.claude/references/domains.md
-.claude/references/habits.md
+.claude/skills/<task-skill>/references/setup-report.md
+.claude/skills/<task-skill>/references/domains.md
+.claude/skills/<task-skill>/references/habits.md
 ```
 
-如果最终确实生成某个任务 skill，也可以把相关 references 放在该 skill 的 `references/` 下。`SKILL.md` 只放触发、执行顺序和导航，不承载完整报告、领域索引或习惯矩阵。
+没有对应任务 skill 时，这些候选降级为 internal（仅扫描账本登记），不生成独立文件。`.claude/references/*.md` 不是 Claude Code 原生路径，本项目不使用。`SKILL.md` 只放触发、执行顺序和导航，不承载完整报告、领域索引或习惯矩阵。
 
 ## 流程
 
@@ -119,8 +119,7 @@ CLAUDE.md
 
 ## 常用入口
 
-- 项目画像和领域索引：见 `.claude/references/domains.md`。
-- 命令和验证方式：见 `.claude/references/setup-report.md` 或独立命令 reference。
+- 项目画像、领域索引、习惯矩阵和 setup report 归属对应任务 skill，由该 skill 的 `SKILL.md` 主动读取。
 - 任务 skill 使用当前项目自己的名称，例如核心框架、装修、发布、组件等真实任务入口。
 ```
 
@@ -128,8 +127,9 @@ CLAUDE.md
 
 ## Setup Report
 
-setup report 默认放在 `.claude/references/setup-report.md`。
-习惯矩阵默认放在 `.claude/references/habits.md`；setup report 只摘要引用它。
+setup report 必须归属某个任务 skill，放在 `.claude/skills/<task-skill>/references/setup-report.md`，由该 SKILL.md 主动 Read。习惯矩阵同样放在 `.claude/skills/<task-skill>/references/habits.md`；setup report 只摘要引用它。
+
+没有合适任务 skill 承载时，setup report 降级为内部扫描账本，不生成独立文件。
 
 模板：
 

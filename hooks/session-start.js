@@ -31,26 +31,35 @@ function emit(obj) {
   process.stdout.write(JSON.stringify(obj) + '\n');
 }
 
+function stripFrontmatter(text) {
+  if (!text.startsWith('---')) return text;
+  const closeIdx = text.indexOf('\n---', 3);
+  if (closeIdx === -1) return text;
+  return text.slice(closeIdx + 4).replace(/^\s*\n/, '');
+}
+
 function main() {
   if (!fs.existsSync(META_SKILL)) {
     emit({ continue: true });
     return 0;
   }
 
-  let skillContent;
+  let rawContent;
   try {
-    skillContent = fs.readFileSync(META_SKILL, 'utf8');
+    rawContent = fs.readFileSync(META_SKILL, 'utf8');
   } catch (_err) {
     emit({ continue: true });
     return 0;
   }
+
+  const skillContent = stripFrontmatter(rawContent);
 
   const preamble =
     '已加载 Claude Workflow skill 路由规则。\n\n' +
     "**下方是 'using' meta-skill 的全文 — " +
     "这是当前会话的工作流入口。其他 skill 一律用 'Skill' 工具调用。**\n\n";
 
-  const sessionContext = '<EXTREMELY_IMPORTANT>\n' + preamble + skillContent + '\n</EXTREMELY_IMPORTANT>';
+  const sessionContext = '<EXTREMELY-IMPORTANT>\n' + preamble + skillContent + '\n</EXTREMELY-IMPORTANT>';
 
   emit({
     hookSpecificOutput: {

@@ -1,6 +1,6 @@
 ---
 name: setup-domain
-description: "Use selectively during setup. Scan one high-frequency business domain only when it has repeated workflows or project-specific behavior that may justify a domain skill or references."
+description: "setup 流程按需使用：只对存在重复流程或项目特有行为、可能值得 domain skill 或 reference 的高频业务领域做单领域只读扫描。"
 tools: Read, Glob, Grep
 model: inherit
 ---
@@ -10,6 +10,8 @@ model: inherit
 你是 setup 的只读业务领域扫描子代理。只扫描主线程指定的高频业务领域，不写文件，不生成 `.claude/` 内容，不做最终决策。
 
 不要因为存在目录、页面数量多、或模块名字看起来重要，就建议生成 skill。只有在该领域有明确任务触发、重复流程、项目特有规则或高风险边界时，skill 才有价值。
+
+会话启动时已加载的 CLAUDE.md、AGENTS.md、`.claude/rules/*.md` 只能作为对照线索；判断依据必须以你实际读取过的领域文件为准，不允许仅凭已注入规则得出结论。
 
 ## 扫描范围
 

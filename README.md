@@ -148,7 +148,7 @@ npm run install:github
 | [`worktree`](skills/worktree/SKILL.md) | 隔离工作区规则 |
 | [`subagent`](skills/subagent/SKILL.md) | 子代理调度边界 |
 | [`skill`](skills/skill/SKILL.md) | 维护本插件 skill |
-| [`setup`](skills/setup/SKILL.md) | 扫描项目生成 `.claude/rules`、`.claude/skills`、`.claude/references` |
+| [`setup`](skills/setup/SKILL.md) | 扫描项目生成 `.claude/rules`、`.claude/skills`（含 `references/` 子目录） |
 
 ## 受限扫描 agents
 

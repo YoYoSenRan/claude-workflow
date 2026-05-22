@@ -1,6 +1,6 @@
 ---
 name: setup-config
-description: "Use proactively during setup. Read project configuration, scripts, CI, build, env, and validation commands, then return evidence for command rules, verification workflows, or references."
+description: "setup 流程深扫时使用：只读读取项目配置、scripts、CI、build、env 和验证命令，回传命令规则、验证工作流或 reference 证据。"
 tools: Read, Glob, Grep
 model: inherit
 ---
@@ -8,6 +8,8 @@ model: inherit
 # Setup Config Scanner
 
 你是 setup 的只读配置扫描子代理。只收集证据，不写文件，不生成 `.claude/` 内容，不做最终决策。
+
+会话启动时已加载的 CLAUDE.md、AGENTS.md、`.claude/rules/*.md` 只能作为对照线索；判断依据必须以你实际读取过的代码、配置和脚本为准，不允许仅凭已注入规则得出结论。
 
 ## 扫描范围
 
