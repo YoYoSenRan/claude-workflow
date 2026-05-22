@@ -13,11 +13,14 @@
 | `plan` | 将已确认需求写成可执行计划 |
 | `execute` | 按已批准计划逐步执行，不擅自改计划 |
 | `debug` | 报错、测试失败、异常行为的根因调查与修复 |
+| `test` | 测试策略、回归用例、失败复现和替代验证 |
 | `verify` | 完成声明前的新鲜证据检查 |
 | `finish` | 提交、PR、保留、丢弃等收尾决策 |
 | `review` | 代码评审和评审反馈处理，Findings 先行 |
 | `worktree` | 隔离工作区规则 |
 | `subagent` | Claude Code subagent 调度边界和提示模板 |
+| `skill` | 创建、修改和评审 Claude Workflow skill |
+| `setup` | 扫描当前项目并生成项目级 rules 和 project-* skills |
 
 ## 安装方式
 
@@ -31,32 +34,28 @@ npm run dev
 
 适合改 skill 或 hook 后快速测试。插件内 skill 会以插件命名空间出现，例如 `claude-workflow:think`。
 
-### 安装到本机
+### 本地仓库安装
 
-在本机测试完整安装流程：
-
-```bash
-npm run install:local
-```
-
-卸载：
+从当前仓库安装到 user scope，所有 Claude Code 项目都会生效：
 
 ```bash
-npm run uninstall:local
+npm run install:dev
 ```
 
-### 安装到用户全局
+这个方式适合本地调试安装流程。它会把当前仓库快照复制到 Claude Code 插件缓存；修改本仓代码后需要重新安装，或用 `npm run dev` 直接加载当前仓库。
+
+### GitHub 安装
 
 从 GitHub marketplace 安装到 user scope：
 
 ```bash
-npm run install:user
+npm run install:github
 ```
 
 卸载：
 
 ```bash
-npm run uninstall:user
+npm run uninstall
 ```
 
 查看安装状态：
@@ -65,7 +64,7 @@ npm run uninstall:user
 npm run plugin:list
 ```
 
-不要同时保留 local 和 user 两份同名 `yoyosenran-tools` marketplace。测试完 local 后先卸载，再安装 user scope。更细的调试命令见 [安装与调试](docs/install.md)。
+不要同时注册本地路径和 GitHub 两份同名 `yoyosenran-tools` marketplace。切换来源前先卸载，再安装另一种来源。更细的调试命令见 [安装与调试](docs/install.md)。
 
 ### 手动命令
 
@@ -104,18 +103,20 @@ skills/
   plan/
   execute/
   debug/
+  test/
   verify/
   finish/
   review/
   worktree/
   subagent/
+  skill/
+  setup/
 docs/
   architecture.md
   install.md
   testing.md
 tests/
   static/
-  skills/
 ```
 
 ## 验证
@@ -132,6 +133,7 @@ npm run validate
 - 模糊需求先澄清，不盲改。
 - 已批准计划才进入 `execute`。
 - bug 和测试失败先找根因。
+- 行为变化优先补能证明问题的测试或替代验证。
 - 完成、修好、通过必须有新鲜验证证据。
 - 子代理只做边界清晰的辅助任务，不替主智能体做最终决策。
 

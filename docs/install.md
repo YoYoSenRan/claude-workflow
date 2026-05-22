@@ -22,51 +22,44 @@ claude --plugin-dir .
 
 ---
 
-## 本地安装
+## 本地仓库安装
 
-安装：
+从当前仓库安装到 user scope，所有 Claude Code 项目都会生效：
 
 ```bash
-npm run install:local
+npm run install:dev
 ```
 
 卸载：
 
 ```bash
-npm run uninstall:local
+npm run uninstall
 ```
 
 底层命令：
 
 ```bash
-claude plugin marketplace add . --scope local
-claude plugin install claude-workflow@yoyosenran-tools --scope local
-claude plugin uninstall claude-workflow --scope local
+claude plugin marketplace add ./ --scope user
+claude plugin install claude-workflow@yoyosenran-tools --scope user
+claude plugin uninstall claude-workflow --scope user
 claude plugin marketplace remove yoyosenran-tools
 ```
+
+这个方式会把当前仓库快照复制到 Claude Code 插件缓存；修改本仓代码后需要重新安装，或用 `npm run dev` 直接加载当前仓库。
 
 ## GitHub marketplace 安装
 
 安装到 user scope：
 
 ```bash
-npm run install:user
+npm run install:github
 ```
 
 卸载：
 
 ```bash
-npm run uninstall:user
+npm run uninstall
 ```
-
-如果要用当前本地仓库作为 user scope marketplace 源：
-
-```bash
-claude plugin marketplace add . --scope user
-claude plugin install claude-workflow@yoyosenran-tools --scope user
-```
-
-这个方式只适合调试 user scope 行为；日常本地调试优先用 `npm run dev` 或 `npm run install:local`。
 
 底层命令：
 
@@ -91,7 +84,7 @@ npm run plugin:list
 claude plugin details claude-workflow
 ```
 
-不要同时保留 local 和 user 两份同名 `yoyosenran-tools` marketplace。测试完 local 后先卸载，再安装 user scope。
+不要同时注册本地路径和 GitHub 两份同名 `yoyosenran-tools` marketplace。切换来源前先卸载，再安装另一种来源。
 
 ---
 

@@ -39,10 +39,11 @@ Claude Workflow 是一组协同工作的开发流程 skills，不是零散命令
 
 1. 先判断请求类型、明确程度和风险。
 2. 选择最小足够流程。
-3. 如果某个 skill 明确适用，先调用 `Skill` 工具并按原文执行。
-4. 调用主流程 skill 时公开说明：`正在使用 <skill> 来 <目的>`。
-5. 轻量小改只需简短说明正在做什么，不展开完整流程话术。
-6. 如果 skill 有清单，用 TodoWrite 建任务；轻量小改不强制建任务。
+3. 涉及代码实现、计划、调试或测试时，先检查当前项目是否有适用的项目级 rules 或 `project-*` skills。
+4. 如果某个 skill 明确适用，先调用 `Skill` 工具并按原文执行。
+5. 调用主流程 skill 时公开说明：`正在使用 <skill> 来 <目的>`。
+6. 轻量小改只需简短说明正在做什么，不展开完整流程话术。
+7. 如果 skill 有清单，用 TodoWrite 建任务；轻量小改不强制建任务。
 
 ## 入口路由
 
@@ -55,11 +56,14 @@ Claude Workflow 是一组协同工作的开发流程 skills，不是零散命令
 | 复杂实现 / 多步骤改动 | `think` -> `plan` |
 | 执行已有计划 | 使用 `execute` |
 | bug / 报错 / 测试失败 | 使用 `debug` |
+| 测试策略 / 补回归测试 | 使用 `test` |
 | 完成声明 | 使用 `verify` |
 | 收尾 / 提交 / PR | 使用 `finish` |
 | 代码评审 | 使用 `review` |
 | 隔离工作区 | 使用 `worktree` |
 | 子代理调度 | 使用 `subagent` |
+| 创建 / 修改 workflow skill | 使用 `skill` |
+| 初始化项目 rules / project skills | 使用 `setup` |
 
 轻量小改通常满足：
 
@@ -74,6 +78,19 @@ Claude Workflow 是一组协同工作的开发流程 skills，不是零散命令
 - `using` 只做入口路由和 skill 调用纪律，不展开具体 skill 的内部流程。
 - 具体流程由相关 skill 决定，常见入口是 `think` 或 `debug`。
 - 子代理只执行被派遣的具体任务，不递归加载完整主流程。
+
+## 项目级 rules 和 skills
+
+如果当前项目存在 `CLAUDE.md`、`.claude/CLAUDE.md` 或 `.claude/rules/`，它们是项目级持续规则，优先于通用 workflow 默认建议。
+
+如果当前项目存在 `.claude/skills/project-*`：
+
+- 涉及代码实现、计划、调试、测试前，加载当前任务最相关的 project skill；
+- 不要一次性加载全部 project skills；
+- `project-context` 用于理解项目整体；
+- `project-commands` 用于选择验证命令；
+- `project-style` 用于代码风格、命名、导入、错误处理和封装方式；
+- 领域 skill 如 `project-ui`、`project-api`、`project-data`、`project-testing` 只在相关任务中加载。
 
 ## 警示信号
 

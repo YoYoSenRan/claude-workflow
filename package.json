@@ -11,10 +11,9 @@
     "dev": "claude --plugin-dir .",
     "check": "bash tests/static/check-skills.sh",
     "validate": "npm run check && claude plugin validate .claude-plugin/plugin.json && claude plugin validate .claude-plugin/marketplace.json && node hooks/session-start.js && node scripts/session-start.js && node .claude/hooks/session-start.js",
-    "install:local": "claude plugin marketplace add . --scope local && claude plugin install claude-workflow@yoyosenran-tools --scope local",
-    "uninstall:local": "claude plugin uninstall claude-workflow --scope local && claude plugin marketplace remove yoyosenran-tools",
-    "install:user": "claude plugin marketplace add https://github.com/YoYoSenRan/claude-workflow.git --scope user && claude plugin install claude-workflow@yoyosenran-tools --scope user",
-    "uninstall:user": "claude plugin uninstall claude-workflow --scope user && claude plugin marketplace remove yoyosenran-tools",
+    "install:dev": "claude plugin marketplace add ./ --scope user && claude plugin install claude-workflow@yoyosenran-tools --scope user",
+    "install:github": "claude plugin marketplace add https://github.com/YoYoSenRan/claude-workflow.git --scope user && claude plugin install claude-workflow@yoyosenran-tools --scope user",
+    "uninstall": "claude plugin uninstall claude-workflow --scope user && claude plugin marketplace remove yoyosenran-tools",
     "plugin:list": "claude plugin list"
   }
 }

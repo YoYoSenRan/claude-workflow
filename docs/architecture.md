@@ -41,8 +41,8 @@
                               ▼
 ┌──────────────────────────────────────────────────────────────┐
 │ 第 2 层：增强层                                              │
-│   verify / finish / review / worktree / subagent             │
-│   作用：完成前验证、分支收尾、评审、隔离工作区、子代理调度    │
+│   test / verify / finish / review / worktree / subagent / skill / setup │
+│   作用：测试策略、完成前验证、分支收尾、评审、隔离工作区、子代理调度、skill 维护、项目初始化 │
 └──────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -62,7 +62,7 @@
 - `debug` 是 bug / 测试失败 / 异常行为入口，优先找根因，不走普通实现流程。
 - `verify` 是完成声明前的证据门。
 - `finish` 是提交、PR、保留、丢弃等收尾决策门。
-- `review`、`worktree` 和 `subagent` 是增强能力，不应主动打断主流程。
+- `review`、`worktree`、`subagent` 和 `setup` 是增强能力，不应主动打断主流程。
 - 当前 `subagent` 只提供调度规则；完整子代理开发流程必须等 `agents/` 和 reviewer prompt 真正存在后再启用。
 
 ---
@@ -76,11 +76,14 @@
 | `plan` | `writing-plans` | 写可执行实现计划 |
 | `execute` | `executing-plans` | inline 执行已批准计划 |
 | `debug` | `systematic-debugging` | 系统化排错 |
+| `test` | `test-driven-development` | 测试策略和回归用例，不强制所有任务 TDD |
 | `verify` | `verification-before-completion` | 完成声明前验证 |
 | `finish` | `finishing-a-development-branch` | 分支 / 提交 / PR 收尾 |
 | `review` | `requesting-code-review` / `receiving-code-review` | 代码评审和评审反馈处理 |
 | `worktree` | `using-git-worktrees` | 隔离工作区 |
 | `subagent` | `dispatching-parallel-agents` / `subagent-driven-development` | 子代理调度规则，不承担完整子代理开发流程 |
+| `skill` | `writing-skills` | 创建、修改和评审 Claude Workflow skill |
+| `setup` | 无直接等价 | 生成当前项目的 Claude Code rules 和 project-* skills |
 
 当前不做完整映射：
 
@@ -88,8 +91,8 @@
 |---|---|
 | `subagent-driven-development` | 暂缓。等 `agents/` 和 reviewer prompts 存在后再做。 |
 | `dispatching-parallel-agents` | 部分吸收到 `subagent` 调度规则；不在 `execute` 中假装完整支持。 |
-| `test-driven-development` | 不单独做强制 skill；在 `plan` 和 `debug` 中按场景要求测试先行。 |
-| `writing-skills` | 暂不引入。先稳定现有 skill。 |
+| `test-driven-development` | 以轻量 `test` skill 吸收；不强制所有任务 TDD。 |
+| `writing-skills` | 以 `skill` skill 吸收；服务本项目 skill 维护。 |
 
 ---
 
@@ -197,7 +200,18 @@
 
 ## 5. 增强层定义
 
-### 5.1 `verify`
+### 5.1 `test`
+
+目标：为行为变更选择合适测试或替代验证。
+
+规则：
+
+- bug 修复优先补能复现失败的回归测试。
+- 功能变更优先证明用户可见行为或 API 契约。
+- 不强制纯文档、格式、小配置改动写测试。
+- 没有测试条件时，必须说明原因并给替代验证。
+
+### 5.2 `verify`
 
 目标：禁止无证据完成声明。
 
@@ -207,7 +221,7 @@
 - 必须读取完整输出和退出码。
 - 不能用历史输出、推测、子代理报告替代验证。
 
-### 5.2 `finish`
+### 5.3 `finish`
 
 目标：安全地结束一段开发工作。
 
@@ -226,7 +240,7 @@
 - 不主动执行破坏性 git 命令。
 - 不在测试失败时建议合并或 PR。
 
-### 5.3 `review`
+### 5.4 `review`
 
 目标：让评审回到工程风险，而不是总结式夸赞。
 
@@ -236,7 +250,7 @@
 - 优先级：bug、行为回归、安全风险、缺失测试。
 - 没问题时明确说没有发现阻塞问题，同时说明剩余风险。
 
-### 5.4 `worktree`
+### 5.5 `worktree`
 
 目标：在需要隔离开发时保护当前工作区。
 
@@ -246,7 +260,7 @@
 - 优先尊重当前 harness 的原生工作区机制。
 - 使用 git worktree 前说明路径、分支、清理方式。
 
-### 5.5 `subagent`
+### 5.6 `subagent`
 
 目标：让子代理只承担边界清晰的辅助任务。
 
@@ -257,6 +271,31 @@
 - 不递归派发子代理。
 - 当前不启用完整 subagent-driven-development。
 
+### 5.7 `skill`
+
+目标：维护 Claude Workflow skill 体系。
+
+规则：
+
+- 新增 skill 前先判断是否跨项目复用，项目专属知识不做全局 skill。
+- `description` 只写触发条件，不总结完整流程。
+- 新增或修改 skill 必须同步架构、入口路由和确定性静态检查。
+- 不把具体 skill 的内部流程塞进 `using`。
+
+### 5.8 `setup`
+
+目标：把当前项目的真实习惯沉淀成 Claude Code 支持的项目级 rules 和 project skills。
+
+规则：
+
+- 只生成 Claude Code 支持的内容：`CLAUDE.md`、`.claude/CLAUDE.md`、`.claude/rules/*.md`、`.claude/skills/<name>/SKILL.md` 和 skill references。
+- 项目入口说明默认优先使用项目根 `CLAUDE.md`；只有项目已有 `.claude/CLAUDE.md` 或用户明确要求时才沿用。
+- 只处理当前项目下的文件，不读取、生成或修改当前项目之外的 Claude 配置。
+- 先只读扫描，再生成候选设计；用户确认后才写入目标项目。
+- rules 只放短、稳定、高频规则；详细示例、证据和报告放 project skill references。
+- 有证据才生成领域 skill；没有证据就写入 setup report 的未覆盖项。
+- 不把目标项目专属知识写回本插件仓库，除非用户明确初始化本仓。
+
 ---
 
 ## 6. 文档约定
@@ -264,7 +303,7 @@
 | 文档 | 作用 | 路径 |
 |---|---|---|
 | 架构基线 | 定义 skill 体系和边界 | `docs/architecture.md` |
-| 测试策略 | 定义如何验证 skill 行为 | `docs/testing.md` |
+| 测试策略 | 定义确定性结构检查和发布前验证 | `docs/testing.md` |
 | 路线图 | 阶段性改造方案 | `docs/roadmaps/*.md` |
 | spec | 复杂实现任务的需求边界 | `docs/specs/*.md` |
 | plan | 具体实施计划 | `docs/plans/*.md` |
@@ -325,7 +364,7 @@ description: "<触发条件>"
 子代理规则：
 
 - `using`、`execute`、`finish`、`worktree`、`subagent` 使用 `SUBAGENT-STOP`。
-- `think`、`plan`、`debug`、`verify`、`review` 可以写普通的“子代理辅助模式”章节，但必须限制为只读、草案、评审或验证输出。
+- `think`、`plan`、`debug`、`test`、`verify`、`review`、`skill` 可以写普通的“子代理辅助模式”章节，但必须限制为只读、草案、评审或验证输出。
 - 不自造新的 XML 标签；目前只有 `SUBAGENT-STOP` 继承自 `superpowers` 的 prompt 约定。
 - 子代理不得替主智能体确认需求、批准计划、执行收尾、提交、推送、切换工作区或宣布最终完成。
 
@@ -338,11 +377,14 @@ description: "<触发条件>"
 3. `plan` 不执行计划。
 4. `execute` 不擅自改计划。
 5. `debug` 没有根因前不修复。
-6. `verify` 是完成声明前的证据门。
-7. `finish` 不在未确认时执行破坏性动作。
-8. 空壳 skill 不允许同步或发布。
-9. `subagent` 只负责调度规则；没有 `agents/` 和 reviewer prompts 时，不声明支持完整 subagent-driven-development。
-10. 架构调整必须先更新本文档。
+6. `test` 不强制所有任务 TDD，但行为变化必须有测试或替代验证判断。
+7. `verify` 是完成声明前的证据门。
+8. `finish` 不在未确认时执行破坏性动作。
+9. 空壳 skill 不允许同步或发布。
+10. `subagent` 只负责调度规则；没有 `agents/` 和 reviewer prompts 时，不声明支持完整 subagent-driven-development。
+11. `skill` 维护 skill 体系，不替代普通开发流程。
+12. `setup` 生成项目级 rules 和 project skills，不替代通用 workflow。
+13. 架构调整必须先更新本文档。
 
 ---
 
@@ -368,6 +410,8 @@ description: "<触发条件>"
 5. 调整 `debug`，接入 `verify`。
 6. 加最小自动化测试。
 7. 清理 `scripts/sync.sh` 和 README。
+8. 增补 `test` 和 `skill` 两个轻量全局 skill。
+9. 增补 `setup`，用于生成目标项目的 rules 和 project skills。
 
 ---
 
