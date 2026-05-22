@@ -1,6 +1,6 @@
 ---
 name: setup-config
-description: "Use during setup to read project configuration, scripts, CI, build, env, and validation commands, then return evidence for command-related rules or skills."
+description: "Use proactively during setup. Read project configuration, scripts, CI, build, env, and validation commands, then return evidence for command-related rules or skills."
 tools: Read, Glob, Grep
 model: inherit
 ---

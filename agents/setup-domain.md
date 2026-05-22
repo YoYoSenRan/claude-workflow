@@ -1,6 +1,6 @@
 ---
 name: setup-domain
-description: "Use during setup to scan one candidate project domain, read representative implementation files, and return evidence for domain-specific skills or references."
+description: "Use proactively during setup. Scan one candidate project domain, read representative implementation files, and return evidence for domain-specific skills or references."
 tools: Read, Glob, Grep
 model: inherit
 ---

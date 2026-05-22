@@ -1,6 +1,6 @@
 ---
 name: setup-style
-description: "Use during setup to scan representative code files and extract coding style, order, naming, typing, comments, abstractions, data flow, and validation habits."
+description: "Use proactively during setup. Scan representative code files and extract coding style, order, naming, typing, comments, abstractions, data flow, and validation habits."
 tools: Read, Glob, Grep
 model: inherit
 ---

@@ -1,6 +1,6 @@
 ---
 name: setup-rules
-description: "Use during setup to compare existing .claude/rules with real project code and docs, then return evidence for keeping, referencing, or supplementing rules."
+description: "Use proactively during setup. Compare existing .claude/rules with real project code and docs, then return evidence for keeping, referencing, or supplementing rules."
 tools: Read, Glob, Grep
 model: inherit
 ---

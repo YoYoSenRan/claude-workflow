@@ -10,9 +10,10 @@
   "scripts": {
     "dev": "claude --plugin-dir .",
     "validate": "claude plugin validate .claude-plugin/plugin.json && claude plugin validate .claude-plugin/marketplace.json && node hooks/session-start.js && node scripts/session-start.js",
-    "install:dev": "claude plugin marketplace add ./ --scope user && claude plugin install claude-workflow@yoyosenran-tools --scope user",
-    "install:github": "claude plugin marketplace add https://github.com/YoYoSenRan/claude-workflow.git --scope user && claude plugin install claude-workflow@yoyosenran-tools --scope user",
-    "uninstall": "claude plugin uninstall claude-workflow --scope user && claude plugin marketplace remove yoyosenran-tools",
+    "install:dev": "claude plugin uninstall claude-workflow@claude-workflow --scope user --keep-data || true && claude plugin marketplace remove yoyosenran-tools || true && claude plugin marketplace remove claude-workflow || true && claude plugin marketplace add ./ --scope user && claude plugin install claude-workflow@claude-workflow --scope user",
+    "install:github": "claude plugin marketplace add https://github.com/YoYoSenRan/claude-workflow.git --scope user && claude plugin install claude-workflow@claude-workflow --scope user",
+    "update": "claude plugin marketplace update claude-workflow && claude plugin update claude-workflow@claude-workflow --scope user",
+    "uninstall": "claude plugin uninstall claude-workflow@claude-workflow --scope user && claude plugin marketplace remove claude-workflow",
     "plugin:list": "claude plugin list"
   }
 }

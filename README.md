@@ -73,7 +73,7 @@ npm run uninstall
 npm run plugin:list
 ```
 
-不要同时注册本地路径和 GitHub 两份同名 `yoyosenran-tools` marketplace。切换来源前先卸载，再安装另一种来源。更细的调试命令见 [安装与调试](docs/install.md)。
+不要同时注册本地路径和 GitHub 两份同名 `claude-workflow` marketplace。切换来源前先卸载，再安装另一种来源。更细的调试命令见 [安装与调试](docs/install.md)。
 
 ### 手动命令
 
