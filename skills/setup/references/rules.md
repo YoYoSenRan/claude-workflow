@@ -18,7 +18,7 @@
 - 大段架构说明；
 - 只有一个样例支撑的观察模式。
 
-这些内容应该放到 `project-*` skill 或 references。
+这些内容应该放到领域 skill 或 references。
 
 ## 通用规则模板
 

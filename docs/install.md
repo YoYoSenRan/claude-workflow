@@ -99,24 +99,8 @@ npm run validate
 底层命令：
 
 ```bash
-npm run check
 claude plugin validate .claude-plugin/plugin.json
 claude plugin validate .claude-plugin/marketplace.json
 node hooks/session-start.js
 node scripts/session-start.js
-node .claude/hooks/session-start.js
 ```
-
----
-
-## 项目级软链接模式
-
-当前仓库还保留 `.claude/` 目录，作为本仓开发时的项目级测试入口：
-
-```text
-.claude/settings.json
-.claude/hooks/session-start.js -> ../../hooks/session-start.js
-.claude/skills/* -> ../../skills/*
-```
-
-这个模式只用于本仓开发测试；跨项目复用优先使用 plugin 模式。

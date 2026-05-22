@@ -20,7 +20,16 @@
 | `worktree` | 隔离工作区规则 |
 | `subagent` | Claude Code subagent 调度边界和提示模板 |
 | `skill` | 创建、修改和评审 Claude Workflow skill |
-| `setup` | 扫描当前项目并生成项目级 rules 和 project-* skills |
+| `setup` | 扫描当前项目并生成项目级 rules 和领域 skills |
+
+## 包含的 agents
+
+| Agent | 作用 |
+|---|---|
+| `setup-config` | setup 深度扫描时读取配置、命令、CI、构建和验证入口 |
+| `setup-style` | setup 深度扫描时提取编码习惯、命名、顺序、类型、注释和抽象边界 |
+| `setup-domain` | setup 深度扫描时读取某个候选领域的代表实现 |
+| `setup-rules` | setup 深度扫描时核对已有 rules 与真实代码是否一致 |
 
 ## 安装方式
 
@@ -70,28 +79,13 @@ npm run plugin:list
 
 底层 `claude plugin ...` 命令见 [安装与调试](docs/install.md)。
 
-## 本仓开发入口
-
-仓库内保留 `.claude/` 项目级软链接结构，用于开发本仓时直接测试：
-
-```text
-.claude/settings.json
-.claude/hooks/session-start.js -> ../../hooks/session-start.js
-.claude/skills/* -> ../../skills/*
-```
-
-跨项目复用优先使用 plugin 模式；`.claude/` 主要是本仓开发便利层。
-
 ## 目录结构
 
 ```text
 .claude-plugin/
   plugin.json
   marketplace.json
-.claude/
-  settings.json
-  hooks/
-  skills/
+agents/
 hooks/
   hooks.json
   session-start.js
@@ -114,9 +108,6 @@ skills/
 docs/
   architecture.md
   install.md
-  testing.md
-tests/
-  static/
 ```
 
 ## 验证
@@ -141,6 +132,5 @@ npm run validate
 
 - [架构基线](docs/architecture.md)
 - [安装与调试](docs/install.md)
-- [测试策略](docs/testing.md)
 - [Changelog](CHANGELOG.md)
 - [中文更新日志](CHANGELOG.zh-CN.md)

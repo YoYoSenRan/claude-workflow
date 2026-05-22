@@ -47,9 +47,9 @@
                               │
                               ▼
 ┌──────────────────────────────────────────────────────────────┐
-│ 第 3 层：未来完整子代理流程层                                │
-│   agents/ + reviewer prompts + task handoff rules             │
-│   作用：只有配套 agent 真实存在后，才启用完整子代理开发流程   │
+│ 第 3 层：受限子代理扫描层                                    │
+│   agents/setup-config, setup-style, setup-domain, setup-rules │
+│   作用：只读收集 setup 证据；主智能体仍负责合并和决策         │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -63,7 +63,7 @@
 - `verify` 是完成声明前的证据门。
 - `finish` 是提交、PR、保留、丢弃等收尾决策门。
 - `review`、`worktree`、`subagent` 和 `setup` 是增强能力，不应主动打断主流程。
-- 当前 `subagent` 只提供调度规则；完整子代理开发流程必须等 `agents/` 和 reviewer prompt 真正存在后再启用。
+- 当前已有 setup 专用只读 agents；完整 subagent-driven-development 仍不启用。
 
 ---
 
@@ -83,13 +83,13 @@
 | `worktree` | `using-git-worktrees` | 隔离工作区 |
 | `subagent` | `dispatching-parallel-agents` / `subagent-driven-development` | 子代理调度规则，不承担完整子代理开发流程 |
 | `skill` | `writing-skills` | 创建、修改和评审 Claude Workflow skill |
-| `setup` | 无直接等价 | 生成当前项目的 Claude Code rules 和 project-* skills |
+| `setup` | 无直接等价 | 生成当前项目的 Claude Code rules 和领域 skills |
 
 当前不做完整映射：
 
 | `superpowers` skill | 本项目处理方式 |
 |---|---|
-| `subagent-driven-development` | 暂缓。等 `agents/` 和 reviewer prompts 存在后再做。 |
+| `subagent-driven-development` | 暂缓。当前只提供 setup 专用只读扫描 agents，不承担完整开发流程。 |
 | `dispatching-parallel-agents` | 部分吸收到 `subagent` 调度规则；不在 `execute` 中假装完整支持。 |
 | `test-driven-development` | 以轻量 `test` skill 吸收；不强制所有任务 TDD。 |
 | `writing-skills` | 以 `skill` skill 吸收；服务本项目 skill 维护。 |
@@ -284,7 +284,7 @@
 
 ### 5.8 `setup`
 
-目标：把当前项目的真实习惯沉淀成 Claude Code 支持的项目级 rules 和 project skills。
+目标：把当前项目的真实习惯沉淀成 Claude Code 支持的项目级 rules 和领域 skills。
 
 规则：
 
@@ -292,7 +292,7 @@
 - 项目入口说明默认优先使用项目根 `CLAUDE.md`；只有项目已有 `.claude/CLAUDE.md` 或用户明确要求时才沿用。
 - 只处理当前项目下的文件，不读取、生成或修改当前项目之外的 Claude 配置。
 - 先只读扫描，再生成候选设计；用户确认后才写入目标项目。
-- rules 只放短、稳定、高频规则；详细示例、证据和报告放 project skill references。
+- rules 只放短、稳定、高频规则；详细示例、证据和报告放领域 skill references。
 - 有证据才生成领域 skill；没有证据就写入 setup report 的未覆盖项。
 - 不把目标项目专属知识写回本插件仓库，除非用户明确初始化本仓。
 
@@ -303,7 +303,6 @@
 | 文档 | 作用 | 路径 |
 |---|---|---|
 | 架构基线 | 定义 skill 体系和边界 | `docs/architecture.md` |
-| 测试策略 | 定义确定性结构检查和发布前验证 | `docs/testing.md` |
 | 路线图 | 阶段性改造方案 | `docs/roadmaps/*.md` |
 | spec | 复杂实现任务的需求边界 | `docs/specs/*.md` |
 | plan | 具体实施计划 | `docs/plans/*.md` |
@@ -381,9 +380,9 @@ description: "<触发条件>"
 7. `verify` 是完成声明前的证据门。
 8. `finish` 不在未确认时执行破坏性动作。
 9. 空壳 skill 不允许同步或发布。
-10. `subagent` 只负责调度规则；没有 `agents/` 和 reviewer prompts 时，不声明支持完整 subagent-driven-development。
+10. `subagent` 只负责调度规则；setup agents 只能只读扫描，不声明支持完整 subagent-driven-development。
 11. `skill` 维护 skill 体系，不替代普通开发流程。
-12. `setup` 生成项目级 rules 和 project skills，不替代通用 workflow。
+12. `setup` 生成项目级 rules 和领域 skills，不替代通用 workflow。
 13. 架构调整必须先更新本文档。
 
 ---
@@ -395,27 +394,13 @@ description: "<触发条件>"
 | 使用范围 | 公开插件，多 harness | 个人 Claude Code 工作流 |
 | 语言 | 英文 | 中文为主 |
 | skill 数量 | 完整方法论库 | 小集合，逐步补齐 |
-| subagent | 完整子代理开发流程 | 暂缓，等配套 agent 存在 |
-| 测试 | 多层 CLI / 集成测试 | 先做最小静态 + 触发测试 |
+| subagent | 完整子代理开发流程 | setup 只读扫描 agents 已存在；完整开发流程仍暂缓 |
+| 验证 | 多层 CLI / 集成测试 | 只保留 plugin validate + hook 冒烟 |
 | 发布 | marketplace / release | 本地同步为主 |
 
 ---
 
-## 10. 当前改造顺序
-
-1. 恢复本文档和 `docs/testing.md`。
-2. 修正 `using` 和 `think`。
-3. 稳定 `plan`。
-4. 收窄 `execute`。
-5. 调整 `debug`，接入 `verify`。
-6. 加最小自动化测试。
-7. 清理 `scripts/sync.sh` 和 README。
-8. 增补 `test` 和 `skill` 两个轻量全局 skill。
-9. 增补 `setup`，用于生成目标项目的 rules 和 project skills。
-
----
-
-## 11. 变更记录
+## 10. 变更记录
 
 | 日期 | 变更 | 原因 |
 |---|---|---|
