@@ -179,8 +179,6 @@ npm run plugin:list  # 查看安装状态
 
 > 不要同时注册本地路径和 GitHub 两份同名 `claude-workflow` marketplace。切换来源前先 `uninstall`。
 
-底层 `claude plugin ...` 命令见 [安装与调试](docs/install.md)。
-
 ## 验证
 
 ```bash
@@ -195,13 +193,10 @@ hooks/             SessionStart hook
 scripts/           启动脚本软链
 skills/            13 个 workflow skill
 agents/            7 个 setup-* 只读扫描子代理
-docs/              架构基线 + 安装文档
 ```
 
 ## 文档
 
-- [架构基线](docs/architecture.md) — 分层、不变式、修订规则
-- [安装与调试](docs/install.md) — 底层命令、故障排查
 - [Changelog](CHANGELOG.md) / [中文更新日志](CHANGELOG.zh-CN.md)
 
 ## License
