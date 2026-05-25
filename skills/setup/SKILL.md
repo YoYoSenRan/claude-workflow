@@ -6,368 +6,151 @@ allowed-tools: Read Grep Glob
 
 ## 子代理辅助模式
 
-如果你是作为子代理被派遣做 setup 扫描，只能返回只读发现、证据文件、强度判断和建议落点；不得写入 `.claude/`、覆盖规则或宣布项目已完成初始化。
+被派遣做 setup 扫描时，只返回只读发现、证据文件、强度判断和建议落点；不写入 `.claude/`、不覆盖规则、不宣布项目已初始化。
 
 # 项目工作流初始化
 
-setup 用来把当前项目的真实习惯沉淀成 Claude Code 支持的项目级内容。它只生成当前项目内的 rules、任务 skills 和 references，不处理任何用户级或跨项目配置。
-
-## 目标
-
-- 用 `.claude/rules/*.md` 承载短、稳定、高频的项目规则；
-- 用 `.claude/skills/<name>/SKILL.md` 承载按需加载的项目任务能力：明确触发、执行顺序、验证方式和风险边界；
-- 用 `references/` 保存证据、示例、编码习惯画像和扫描报告；
-- 让 `think`、`plan`、`execute`、`debug`、`test` 能按当前项目习惯工作。
+把当前项目的真实习惯沉淀成 Claude Code 支持的项目级内容：rules（持续短规则）、任务 skills（按需加载的能力）、references（证据与清单）。只生成当前项目内的内容，不碰用户级或跨项目配置。
 
 ## 何时使用
 
-使用本 skill：
-
 - 用户要求初始化当前项目的 Claude Code 工作流；
-- 用户要求生成项目专属 rules、skills、规范或上下文；
-- 项目代码风格、API、UI、测试、命令等需要沉淀成可复用规则；
-- 已有项目 rules / skills / references 需要刷新，但必须先评估 diff。
+- 生成项目专属 rules / skills / 规范 / 上下文；
+- 已有项目 rules / skills / references 需刷新（必须先评估 diff）。
 
-不使用本 skill：
-
-- 只是修改本仓库全局 workflow skill，应该用 `skill`；
-- 单次代码改动，直接按 `using` 路由到对应流程；
-- 没有用户确认就自动写入目标项目；
-- 为了“覆盖全”而生成没有证据和任务价值支撑的 skill。
-
----
+不使用：只改本插件全局 skill（用 `skill`）；单次代码改动（按 `using` 路由）；未经确认就写入；为“覆盖全”生成无证据的 skill。
 
 ## Claude Code 支持边界
 
-只能生成 Claude Code 原生识别的路径。**不同路径加载方式不同，必须区分对待**：
+只生成 Claude Code 原生识别的路径，按加载方式区分：
 
 | 路径 | 加载方式 | 适用 |
 |---|---|---|
-| `CLAUDE.md` / `.claude/CLAUDE.md` | 启动时**自动加载全文** | 项目入口说明、稳定全局指令 |
-| `.claude/rules/*.md` | 启动时**自动加载**；带 `paths:` frontmatter 则按路径触发 | 短、稳定、持续生效的规则 |
-| `.claude/skills/<name>/SKILL.md` | 描述自动注入；用户或 Claude 调用时加载全文 | 任务能力、执行顺序、验证方式 |
-| `.claude/skills/<name>/references/*.md` | **不自动加载**；由对应 SKILL.md 主动 Read | skill 私有的长样例、覆盖矩阵、证据 |
+| `CLAUDE.md` / `.claude/CLAUDE.md` | 启动时自动加载全文 | 项目入口说明、稳定全局指令 |
+| `.claude/rules/*.md` | 启动时自动加载；带 `paths:` 则按路径触发 | 短、稳定、持续生效的规则 |
+| `.claude/skills/<name>/SKILL.md` | 描述自动注入；调用时加载全文 | 任务能力、执行顺序、验证方式 |
+| `.claude/skills/<name>/references/*.md` | 不自动加载；由对应 SKILL.md 主动 Read | skill 私有长样例、矩阵、证据 |
 
-**注意**：`.claude/references/` 不是 Claude Code 原生路径，本项目不使用。所有 reference 必须归属某个 skill。如果一段长内容找不到 skill 归属，重新判断它是否其实是 rule（写进 `.claude/rules/`）或属于项目入口说明（写进 `CLAUDE.md`）；如果都不是，降级为 internal，不生成。
-
-项目入口说明默认优先写入项目根 `CLAUDE.md`。只有目标项目已经使用 `.claude/CLAUDE.md`，或用户明确要求时，才沿用 `.claude/CLAUDE.md`。
-
-setup 不读取、生成或修改当前项目之外的 Claude 配置。
-
-不要依赖 Claude Code 不会自动识别的自定义主文件作为核心入口。
+`.claude/references/` 不是原生路径，本项目不使用——所有 reference 必须归属某个 skill。项目入口说明默认写项目根 `CLAUDE.md`，仅当项目已用 `.claude/CLAUDE.md` 或用户要求时才沿用。
 
 <HARD-GATE>
-setup 的输出不得引用、评价或依赖当前项目之外的 Claude 配置。
-
-已有 `.claude/rules/` 是输入证据，不是直接跳过候选的理由。rules 和 skills 分工不同：rules 放持续短规则，skills 放按需加载的任务能力、执行顺序和验证方式。
-
-reference 必须归属某个 skill 并由该 SKILL.md 显式 Read，否则不允许生成：
-
-- 落在 `.claude/skills/<name>/references/` 的 reference，必须在对应 SKILL.md 里被显式引用并 Read；
-- 没有 skill 归属的长内容不允许写到任何 `.claude/references/*` 路径；要么变成 rule、要么进 CLAUDE.md、要么降级为 internal（仅进扫描账本）。
-
-完整 setup 必须产出扫描账本。先把项目画像、领域索引、覆盖矩阵和 setup report 作为 references 候选登记；只有发现明确任务触发和执行顺序时，才升级为 skill。
-
-高频开发领域如果有明确 rules 或多个一致样例，只说明值得深扫，不说明必须生成 skill。skill 必须有明确任务触发、执行顺序、验证方式和风险边界。
-
-命名 skill 时，从当前项目真实存在的任务能力、核心框架、工作流程或高频领域中提取名称；不要套用后台、全栈、前端模板或固定清单。
-
-skill 的 `SKILL.md` 不能成为 rules 的复印件，也不能成为项目百科。SKILL.md 只写入口、触发、执行顺序、验证选择和 references 导航；详细规则、覆盖矩阵、证据、示例和长清单必须放到 `references/`。
-
-完整 setup 中，setup report、domains 和 habits 必须归属对应任务 skill 的 `references/`；没有对应 skill 时，降级为 internal，不生成独立文件。
-
-生成 proposal 前必须先形成扫描账本。没有扫描账本，不允许说"扫描完成"，也不允许给最终候选。扫描账本用于内部判断和用户追问时核对；默认用户输出只呈现已分析范围和建议添加项，未采纳项只进入内部扫描账本。
-
-**深度扫描必须实际调用 `Agent` 工具，不允许主线程内联代替**。除非项目无源码目录、无配置入口、且无已有 `.claude/rules/`，否则 setup 必须并发派出至少以下 agent：
-
-- 存在任一配置入口（package / workspace / CI / scripts / build / env）→ `setup-config`
-- 存在源码目录 → `setup-conventions`
-- 存在 CSS/SCSS/LESS/Sass/Stylus、组件 `<style>`、CSS Modules、utility CSS 或 design tokens → `setup-styling`
-- 存在自研框架 / CRUD / table / form / DSL / decoration / API factory → `setup-framework`
-- 存在 `CLAUDE.md` / `.claude/CLAUDE.md` / `.claude/rules/*.md` → `setup-rules`
-
-主线程仅在 agent 不可用、报错或返回为空时补扫；任何缺席必须在用户可见输出中明确说明原因。
-
-用户可见输出必须包含 "已派发 agents" 段，列出实际调用的 `subagent_type`、扫描范围和返回状态。没有这段，不允许给最终建议。
+1. setup 输出不得引用、评价或依赖当前项目之外的 Claude 配置。
+2. reference 必须归属某个 skill 并被该 SKILL.md 显式 Read，否则不生成；无 skill 归属的长内容重判为 rule、CLAUDE.md 内容或降级 internal。
+3. 生成 proposal 前必须先形成扫描账本；没有账本不许说“扫描完成”或给最终候选。账本用于内部判断和用户追问；默认只向用户呈现已分析范围和建议添加项。
+4. 深度扫描必须实际调用 `Agent` 工具，不许主线程内联代替（除非项目无源码、无配置入口、无已有 `.claude/rules/` 三条全中）。强制派发规则见工作流第 4 步。
+5. 用户可见输出必须含“已派发 agents”段，列出实际调用的 `subagent_type`、范围和状态；任何缺席必须说明原因和补扫方式。
+6. skill 必须有明确任务触发、执行顺序、验证方式和风险边界；高频领域或已有 rules 只说明值得深扫，不等于必须生成 skill。skill 名从项目真实任务能力提取，不套后台 / 前端模板。
+7. SKILL.md 只写入口、触发、执行顺序、验证选择和 references 导航；详细规则、矩阵、证据、长清单放 references。setup report、domains、habits 必须归属对应任务 skill 的 references，无归属则降级 internal。
 </HARD-GATE>
-
----
 
 ## 工作流
 
 ### 1. 确认目标项目
 
-先确认当前工作目录就是要初始化的项目。不要把项目专属内容写回 `claude-workflow` 插件仓库，除非用户明确是在初始化本仓。
+确认当前工作目录就是要初始化的项目。不要把项目专属内容写回 `claude-workflow` 插件仓库，除非用户明确要初始化本仓。
 
 ### 2. 只读扫描
 
-先按 `references/overview.md` 和 `references/coverage.md` 做广度索引，再按 `references/habits.md` 分析编码习惯，最后按 `references/domains.md` 判断领域。不要因为先读到某个领域样例就提前生成结论。
+按 `references/overview.md`、`references/coverage.md` 做广度索引，按 `references/habits.md` 分析编码习惯，按 `references/domains.md` 判断领域。证据必须来自目标项目文件系统；已注入的 CLAUDE / rules 只是线索，未实际读取的标为“仅发现路径”。
 
-扫描必须以目标项目文件系统为证据。会话里已经注入的 CLAUDE / rules 内容只能当作线索，不能替代实际读取或文件索引；如果为了节省上下文没有读取某个文件，必须在扫描账本里标为“未读取 / 仅发现路径”。
-
-按顺序执行：
-
-1. **文件索引**：先列出顶层目录、`.claude/`、docs、scripts、tests、CI、配置文件和主要源码目录；
-2. **显式规则**：读取存在的 `CLAUDE.md`、`AGENTS.md`、README、CONTRIBUTING、docs、`.claude/rules/*.md`；
-3. **项目配置**：读取 package / workspace / tsconfig / lint / format / test / build / CI 入口；
-4. **命令入口**：整理 scripts、CI job、常用开发 / 构建 / 验证命令；
-5. **初步候选**：先根据索引、rules、docs、scripts 和目录名列出可能需要的 rules / skills，不做最终判断；
-6. **深度扫描**：按候选范围执行本地抽样；中大型项目或用户要求深入时，先读 `references/agents.md`，再并发派只读子代理扫描；
-7. **编码习惯抽样**：打开 `references/habits.md`，按其中步骤选样例、提取字段、判断强度和落点；
-8. **合并决策**：合并本地扫描和子代理返回，去重、降级弱观察、决定最终建议；
-9. **内部缺口登记**：把未读取的高风险目录或入口记入扫描账本，例如 hooks、hybrid、plugins、tests、CI、生成脚本、关键 runtime 入口；默认不展示给用户，除非它会影响建议生成或用户追问扫描过程。
-
-不要只用 `ls` 和已注入上下文完成 setup。至少要有文件索引、配置读取、规则读取、编码习惯抽样和代表实现抽样；除非项目本身没有对应文件。
+顺序：文件索引（顶层目录、`.claude/`、docs、scripts、tests、CI、配置、主要源码）→ 读已有显式规则（CLAUDE.md / AGENTS.md / README / CONTRIBUTING / docs / `.claude/rules/`）→ 读项目配置（package / workspace / tsconfig / lint / format / test / build / CI）→ 整理命令入口 → 列初步候选。
 
 ### 3. 初步候选
 
-轻量扫描后，先形成初步候选清单。候选只代表“值得深挖”，不是最终建议。
+轻量扫描后形成候选清单（只代表“值得深挖”，不是最终建议）：
 
 ```markdown
 | 类型 | 候选名称 | 初步依据 | 需要深扫什么 |
 |---|---|---|---|
-| rule | <name> | <rules/docs/scripts/目录证据> | <要验证的习惯或命令> |
-| skill | <name> | <高频领域/目录/rule> | <代表文件和写法习惯> |
-| reference | <path> | <证据或长清单需要承载> | <需要收集的证据> |
 ```
-
-不要把初步候选直接输出成最终建议。先进入深度扫描。
 
 ### 4. 深度扫描和子代理
 
-**深度扫描默认通过 `Agent` 工具并发派出 setup-* 子代理执行，不允许主线程内联代替**。只有同时满足以下三条时，才允许由主线程直接完成扫描：
+读 `references/agents.md`，按其分工、提示模板和 plugin 命名空间说明，通过 `Agent` 工具并发派只读子代理。子代理只扫描，不决策、不写入。
 
-- 项目没有源码目录；
-- 没有任何配置入口（package、workspace、CI、scripts、build、env）；
-- 没有 `CLAUDE.md` / `.claude/CLAUDE.md` / `.claude/rules/`。
+强制派发（满足即必须派；短名失败时重试 `claude-workflow:<name>`）：
 
-任何一条不满足，必须实际调用 `Agent`。子代理只扫描，不决策、不写入。每个子代理必须拿到明确范围和固定输出格式。
+- 存在 package / workspace / CI / scripts / build / env 任一配置 → `setup-config`
+- 存在源码目录 → `setup-conventions`
+- 存在 CSS/SCSS/LESS/Sass/Stylus、组件 style、CSS Modules、utility CSS 或 design tokens → `setup-styling`
+- 存在自研框架 / CRUD / table / form / DSL / 装修引擎 / API factory → `setup-framework`
+- 存在 `CLAUDE.md` / `.claude/CLAUDE.md` / `.claude/rules/*.md` → `setup-rules`
+- 反复出现的页面骨架 / 业务流程 / 文件组织 → `setup-patterns`
+- 高频且项目特有流程或风险的业务领域 → `setup-domain`
 
-派发前读取 `references/agents.md`，按其中推荐分工和提示模板组织任务。不要只在正文里说“需要 agent”；必须实际调用 `Agent` 工具。
-
-调用规则：
-
-- `setup-config`：只要项目存在 package / workspace / CI / scripts / build / env 任一类配置，就必须派发；
-- `setup-conventions`：只要项目存在源码目录，就必须派发，用来深扫变量、函数、导入导出、注释、拆分、内聚耦合等严格代码规范；
-- `setup-styling`：只要项目存在 `.css` / `.scss` / `.sass` / `.less` / `.styl`、组件 `<style>`、CSS Modules、utility CSS 或 design tokens，就必须派发；
-- `setup-framework`：只要项目存在自研组件框架、CRUD / table / form 抽象、配置 DSL、装修引擎、API factory 或其他被大量业务复用的核心抽象，就必须派发；
-- `setup-patterns`：只在需要补充页面骨架、文件组织、业务流程和代表样例时派发；不要用它替代 `setup-conventions` / `setup-styling` / `setup-framework`；
-- `setup-rules`：只要项目存在 `CLAUDE.md`、`.claude/CLAUDE.md` 或 `.claude/rules/*.md`，就必须派发；
-- `setup-domain`：只对高频且有项目特有流程 / 风险 / 规则的业务领域派发；不要因为目录存在就派发；
-- 如果某个 agent 无法调用，必须在用户可见输出中说明：未能调用哪个 agent、原因是什么、主线程如何补扫。
-
-Agent 工具调用时显式指定 `subagent_type`：
-
-```text
-subagent_type: setup-config
-subagent_type: setup-conventions
-subagent_type: setup-styling
-subagent_type: setup-framework
-subagent_type: setup-patterns
-subagent_type: setup-rules
-subagent_type: setup-domain
-```
-
-**plugin 命名空间**：本仓库作为 Claude Code 插件安装后，agent 名可能注册为 `claude-workflow:setup-config` 等带 plugin 前缀的形式。如果上面短名调用返回 "agent not found" 或类似错误，必须立刻重试 `subagent_type: claude-workflow:<name>`；两种形式都失败时，按 "agent 不可用" 处理，主线程补扫并在用户可见输出中说明。
-
-不要使用旧称 `Task tool` 描述调度。Claude Code 当前用于派发 subagent 的工具名是 `Agent`。
-
-子代理任务模板：
-
-```text
-你是 setup 深度扫描子代理。只读扫描，不修改文件，不生成 .claude 内容，不做最终决策。
-
-扫描范围：<路径 / 领域 / 候选项>
-目标：验证候选发现是否有足够证据，并判断它对模型工作是否有生成价值。
-
-请读取代表文件，返回表格：
-
-| 发现 | 强度 | 影响范围 | 任务触发 | 产物建议 | 生成理由 | 证据文件 |
-|---|---|---|---|---|---|---|
-
-强度只能是：强规则 / 稳定习惯 / 内部观察 / 不采用。
-影响范围只能是：全项目 / 某技术层 / 某核心框架 / 单业务域。
-产物建议只能是：rule / skill / reference / internal。
-
-边界：
-- 不输出最终“应该生成什么”的结论。
-- 不写文件。
-- 不展示无关目录树。
-- 证据文件必须是实际读取过的文件。
-```
-
-主线程收到结果后：
-
-1. 合并同名候选；
-2. 按产物决策协议重新判定最终落点；
-3. 去掉不采用项；
-4. 将 internal 只留在扫描账本；
-5. 只有能防止模型改错、少问路、写得像项目、正确验证或降低重复扫描成本的候选，才能进入用户可见建议。
+agent 不可用、报错或返回空时主线程补扫，并在用户可见输出说明缺席原因。
 
 ### 5. 形成扫描账本
 
-生成最终建议前，先形成本轮扫描账本。账本必须具体到文件或目录，不写“已全量扫描”这类无法核对的话。默认不要把完整账本贴给用户；用户指出漏项或追问扫描过程时，再按账本回答并补扫漏项。
+生成最终建议前先形成账本，具体到文件或目录，区分“已读取 / 仅发现路径 / 未检查”。不写“已全量扫描”这类无法核对的话。默认不贴给用户，用户追问或指出漏项时再展开并补扫。
 
 ### 6. 生成候选设计
 
-先输出计划，不直接写文件。候选内容必须区分：
-
-- **rules**：持续生效的短规则；
-- **skills**：按需加载的任务能力，必须有明确触发和执行顺序；
-- **references**：证据、示例、习惯矩阵、setup report。
-
-产物决策协议：
+先输出计划，不直接写文件。按产物决策协议判定落点：
 
 | 条件 | 最终落点 | 加载方式 |
 |---|---|---|
 | 强规则 + 全项目 / 某技术层 + 高频踩坑或硬边界 | `.claude/rules/<name>.md` | 自动加载 |
-| 强规则但只对部分路径生效 | `.claude/rules/<name>.md` + `paths:` frontmatter | 触发匹配文件时加载 |
+| 强规则但只对部分路径生效 | `.claude/rules/<name>.md` + `paths:` | 触发匹配文件时加载 |
 | 稳定习惯 + 明确任务触发 + 需要执行步骤 | `.claude/skills/<name>/SKILL.md` | 按需加载 |
-| skill 私有的长样例、覆盖矩阵、证据 | `.claude/skills/<name>/references/<file>.md` | 对应 SKILL.md 主动 Read |
-| 跨 skill 想共享、但无 skill 归属的长内容 | 重新判断：是 rule 就进 `.claude/rules/`；是项目说明就进 `CLAUDE.md`；都不是则降级 | — |
-| 单点观察、冲突项、低频业务、普通目录、没有任务触发、没有消费路径 | internal（仅进扫描账本） | 不写入 |
+| skill 私有长样例、矩阵、证据 | `.claude/skills/<name>/references/<file>.md` | 对应 SKILL.md 主动 Read |
+| 跨 skill 共享但无 skill 归属的长内容 | 重判：rule / CLAUDE.md / 降级 | — |
+| 单点观察、冲突项、低频业务、无任务触发 | internal（仅进账本） | 不写入 |
 
-每个进入用户可见建议的候选必须至少满足一条生成价值：
+每个进入用户可见建议的候选必须至少满足一条生成价值：防止模型改错、少问路、写得像项目、正确验证、降低重复扫描成本。只能描述“项目里有什么”的候选放 reference 或 internal。
 
-- 能防止模型改错；
-- 能让模型少问路；
-- 能让模型写得像项目；
-- 能让模型正确验证；
-- 能降低重复扫描成本。
+生成前读对应 reference：rules 读 `references/rules.md`，skills 读 `references/skills.md`，习惯按 `references/habits.md`，覆盖矩阵按 `references/coverage.md`。已有 rules 作为证据读取、可被 skill 引用、避免重复生成同类 rule。
 
-候选进入 rules 或 skills 前，必须写清它会如何改变模型下一步行为；只能描述“项目里有什么”的候选放入 reference 或 internal。
-
-生成 rules 前读 `references/rules.md`。生成 skills 前读 `references/skills.md`。编码习惯必须按 `references/habits.md` 的步骤提取并判断落点。覆盖矩阵和证据等级必须按 `references/coverage.md` 输出。
-
-已有项目 rules 的处理方式：
-
-- 作为证据来源读取；
-- 可在相关 skill 中引用；
-- 可避免重复生成同类 rule；
-- 高频领域先进入深扫候选；只有具备明确任务触发、执行顺序和生成价值时，才生成 skill。
-- skill 按项目实际任务能力、核心框架、工作流程或高频领域命名；目录存在只作为线索，不能作为生成理由。
-
-如果证据不足会影响生成结果，不硬生成；默认从建议中省略该项。只有缺口会阻塞用户目标时才说明。
-
-用户可见建议必须分组输出，不要把 rule、skill、reference 混在同一张表里。默认不要输出“依据”列；证据细节写入 setup report，用户追问时再展开。
-
-`作用 / 使用场景` 不能写成“路由规则约束”“项目画像入口”这类短标签，必须说明它帮助模型在什么任务中做什么判断。
-
-默认不要输出未采纳项区块。未采纳项只进内部扫描账本。只有会影响用户确认或需要用户决策的内容，才放到“需要确认”中。
-
-用户可见建议格式：
+用户可见建议分组输出（不混表，默认不输出“依据”列）：
 
 ```markdown
 建议生成 rules：
 | 路径 | 使用场景 / 作用 | 内容概要 |
 |---|---|---|
-| `.claude/rules/<name>.md` | <模型在什么任务中必须持续遵守什么边界> | <短规则包含哪些约束，不写长样例> |
 
 建议生成 skills：
 | 路径 | 使用场景 / 作用 | 内容概要 |
 |---|---|---|
-| `.claude/skills/<name>/SKILL.md` | <遇到什么任务时加载；加载后帮助模型按什么顺序工作> | <触发条件、执行顺序、需要读取的 references、验证选择> |
 
 建议生成 references：
 | 路径 | 承载内容 | 消费入口 |
 |---|---|---|
-| `.claude/skills/<name>/references/<file>.md` | <skill 私有长内容：长样例、覆盖矩阵、证据、setup report 等> | 由 `.claude/skills/<name>/SKILL.md` 主动 Read |
 ```
 
-reference 必须归属某个 skill；没有 skill 归属的长内容不允许写入任何 `.claude/references/*` 路径，重新判断是 rule、CLAUDE.md 内容还是降级 internal。
+`使用场景 / 作用` 必须写成完整句，说明该文件帮模型在什么任务中做什么判断，不写“API 层约束”这类短标签。默认不输出未采纳项。
 
 ### 7. 等用户确认
 
-用户确认后才写入 `.claude/`。如果目标文件已存在：
-
-- 先读取现有内容；
-- 说明保留、追加或替换策略；
-- 不无提示覆盖用户已有规则。
+确认后才写入 `.claude/`。目标文件已存在时：先读现有内容，说明保留 / 追加 / 替换策略，不无提示覆盖用户已有规则。
 
 ### 8. 验证结构
 
-写入后检查：
-
-- 每个 skill 都有 `SKILL.md`、`name`、`description`；
-- `name` 和目录名一致；
-- rules 简短，不包含长示例；
-- 所有 reference 文件均落在 `.claude/skills/<name>/references/` 下，且被对应 `SKILL.md` 显式引用；
-- 没有 `.claude/references/*.md` 这种全局 reference 文件（本项目不使用该路径）；
-- setup report、domains、habits 已落到建议的 references 位置；
-- skill 正文没有大段复写 rules；详细内容已经放到 references；
-- 没有生成空壳 skill。
-
----
-
-## 生成原则
-
-- 有证据才生成；证据不足的候选只进入内部扫描账本，默认不向用户列出。
-- 明确区分强规则和观察模式：文档规则优先，代码样例只是证据。
-- 不把偶然写法总结成规范；至少需要多个相似样例，或来自明确文档。
-- 习惯扫描必须覆盖写法风格、代码顺序、命名、类型、核心写法、抽象边界、注释、数据流和验证方式；无法落地的维度只保留在内部扫描账本，不进入默认候选输出。
-- 不一次性生成所有候选；只生成当前项目确实存在且有生成价值的 rules / skills / references。
-- 不自动修改用户已有 `CLAUDE.md`、`.claude/CLAUDE.md` 或 rules，除非用户确认合并策略。
-- `SKILL.md` 保持短；长示例、文件清单、扫描报告放 references。
-- 若某任务 skill 需要已有 rule，应引用该 rule，并把补充证据放 references；不要复制 rule 正文。
+写入后检查：每个 skill 有 `SKILL.md` / `name` / `description`，`name` 与目录名一致；rules 简短无长示例；所有 reference 落在 `.claude/skills/<name>/references/` 且被对应 SKILL.md 显式引用；没有 `.claude/references/*.md`；setup report / domains / habits 已落到建议位置；SKILL.md 没有大段复写 rules；没有空壳 skill。
 
 ## 输出格式
 
 只读扫描后输出：
 
 ```text
-项目类型：
-- ...
+项目类型：...
 
 已派发 agents：
 | subagent_type | 扫描范围 | 返回状态 |
 |---|---|---|
-| setup-config | <范围> | 成功 / 失败原因 |
-| setup-conventions | <范围> | 成功 / 失败原因 |
-| ...
 
 未派发 / 失败的 agent：
 - <名称>：<原因>（主线程如何补扫）
 
 已分析内容：
-- 项目类型 / 技术栈：...
-- 已有项目规则：...
-- 关键代码领域：...
-- 编码习惯：写法风格 / 代码顺序 / 命名 / 类型 / 注释 / 抽象 / 数据流 / 验证方式
-- 命令和验证入口：...
+- 项目类型 / 技术栈、已有规则、关键代码领域、编码习惯、命令和验证入口
 
-建议生成 rules：
-| 路径 | 使用场景 / 作用 | 内容概要 |
-|---|---|---|
-| ... | ... | ... |
-
-建议生成 skills：
-| 路径 | 使用场景 / 作用 | 内容概要 |
-|---|---|---|
-| ... | ... | ... |
-
-建议生成 references：
-| 路径 | 承载内容 | 用途 |
-|---|---|---|
-| ... | ... | ... |
+建议生成 rules / skills / references：（分三张表，见上）
 
 需要确认：
-- 是否写入这些文件
-- 已存在文件的处理方式
-- 需要用户决策的冲突或过期文档处理方式
+- 是否写入；已存在文件的处理方式；冲突或过期文档处理方式
 ```
 
-写入完成后输出：
-
-```text
-已生成：
-- ...
-
-验证：
-- ...
-
-使用注意：
-- ...
-```
+写入完成后输出已生成项、验证结果、使用注意。
 
 ## 与其他 skill 的关系
 

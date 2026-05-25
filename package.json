@@ -14,6 +14,8 @@
     "install:github": "claude plugin marketplace add https://github.com/YoYoSenRan/claude-workflow.git --scope user && claude plugin install claude-workflow@claude-workflow --scope user",
     "update": "claude plugin marketplace update claude-workflow && claude plugin update claude-workflow@claude-workflow --scope user",
     "uninstall": "claude plugin uninstall claude-workflow@claude-workflow --scope user && claude plugin marketplace remove claude-workflow",
-    "plugin:list": "claude plugin list"
+    "plugin:list": "claude plugin list",
+    "test:skills": "bash tests/claude-code/run-skill-tests.sh",
+    "test:judge": "bash tests/claude-code/run-judge-calibration.sh"
   }
 }
