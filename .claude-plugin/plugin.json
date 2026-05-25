@@ -1,6 +1,5 @@
 {
   "name": "claude-workflow",
-  "displayName": "Claude Workflow",
   "description": "Chinese-first Claude Code workflow skills, routing rules, and SessionStart hook.",
   "author": {
     "name": "macos"

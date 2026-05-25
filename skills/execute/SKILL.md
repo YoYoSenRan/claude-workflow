@@ -109,8 +109,8 @@ description: "已有书面计划、用户要求按计划执行时使用；只做
 
 原因：
 
-- 当前仓库还没有配套 `agents/`；
-- 没有 implementer / spec reviewer / code reviewer 的完整 prompt；
+- 当前仓库的 `agents/` 只有 setup 扫描类子代理，没有 implementer / spec reviewer / code reviewer 执行类子代理；
+- 没有执行类子代理的完整 prompt；
 - 没有自动化验证 subagent handoff 行为。
 
 如果任务过大，不适合 inline 执行，停止并建议：
