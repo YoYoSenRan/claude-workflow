@@ -190,7 +190,6 @@ npm run validate   # plugin validate + hook 冒烟
 ```text
 .claude-plugin/    plugin.json + marketplace.json
 hooks/             SessionStart hook
-scripts/           启动脚本软链
 skills/            13 个 workflow skill
 agents/            7 个 setup-* 只读扫描子代理
 ```
