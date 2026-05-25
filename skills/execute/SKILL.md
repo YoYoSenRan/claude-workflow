@@ -109,7 +109,7 @@ description: "已有书面计划、用户要求按计划执行时使用；只做
 
 原因：
 
-- 当前仓库的 `agents/` 只有 setup 扫描类子代理，没有 implementer / spec reviewer / code reviewer 执行类子代理；
+- 本插件未提供 implementer / spec reviewer / code reviewer 等执行类子代理；
 - 没有执行类子代理的完整 prompt；
 - 没有自动化验证 subagent handoff 行为。
 

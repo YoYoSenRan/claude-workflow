@@ -301,7 +301,7 @@ docs/plans/YYYY-MM-DD-<name>.md
 如果环境支持 subagent，且计划较大，可以使用：
 
 ```text
-skills/plan/references/reviewer.md
+references/reviewer.md
 ```
 
 但这是可选增强，不是硬门槛。没有 reviewer agent 时，不要假装已经评审。
