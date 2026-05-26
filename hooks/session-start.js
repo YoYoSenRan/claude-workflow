@@ -57,24 +57,18 @@ function main() {
   const preamble =
     '<EXTREMELY-IMPORTANT>\n' +
     '你有 Claude Workflow。\n' +
-    '在任何回复、澄清提问、读文件、跑命令或编辑前，先检查是否有 workflow skill 或项目 skill 可能适用。\n' +
-    '只要有 1% 可能适用，必须用 `Skill` 工具加载当前版本；不得凭记忆或下方摘要执行。\n' +
-    '任务简单、规则记得、先看一眼、先跑个命令，都不是跳过 Skill 的理由。\n' +
-    'think 只负责对齐和判断；用户确认方向后进入 plan，不在 think 里实现。\n' +
-    'plan 可用轻量内联计划，但加载 plan 后必须先给计划并等执行确认，不得直接写文件。\n' +
-    '完成声明前必须用 verify；timeout、截断输出、无退出码都不是通过证据。\n' +
-    '用户可见回复只说任务动作；不要提 Skill、技能名或"加载"，除非用户正在讨论 workflow 本身。\n' +
+    '必须遵守：\n' +
+    '1. 回复、澄清、读文件、跑命令或编辑前，必须先按下方 using 判断是否需要 Skill。\n' +
+    '2. 任何 Skill 适用时，必须用 Skill 工具加载当前版本；不得凭记忆、摘要或经验代替。\n' +
+    '3. 用户可见回复只说任务动作，不提 Skill、技能名或"加载"，除非用户正在讨论 workflow 本身。\n' +
+    '4. using 是唯一入口；具体流程以被加载的 Skill 内容为准。\n' +
+    '5. 如果这里和 using 冲突，以 using 为准。\n' +
     '</EXTREMELY-IMPORTANT>\n\n' +
-    "下方是 'using' 工作流入口全文，其他 skill 一律用 `Skill` 工具调用：\n\n";
+    "下方是 'using' 工作流入口全文：\n\n";
 
   const sessionContext = '<workflow-routing>\n' + preamble + skillContent + '\n</workflow-routing>';
 
-  emit({
-    hookSpecificOutput: {
-      hookEventName: 'SessionStart',
-      additionalContext: sessionContext,
-    },
-  });
+  emit({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: sessionContext } });
   return 0;
 }
 
