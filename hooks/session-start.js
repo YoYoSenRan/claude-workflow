@@ -55,11 +55,14 @@ function main() {
   const skillContent = stripFrontmatter(rawContent);
 
   const preamble =
-    '已加载 Claude Workflow skill 路由规则。\n\n' +
-    "**下方是 'using' meta-skill 的全文 — " +
-    "这是当前会话的工作流入口。其他 skill 一律用 'Skill' 工具调用。**\n\n";
+    '<EXTREMELY-IMPORTANT>\n' +
+    '收到每个请求先路由：选能安全完成任务的最小流程。\n' +
+    '命中某 skill → 必须用 `Skill` 工具加载全文再执行；不凭记忆、不凭下方摘要直接动手。\n' +
+    '用主流程 skill 时明说「正在用 <skill> 来 <目的>」。\n' +
+    '</EXTREMELY-IMPORTANT>\n\n' +
+    "下方是 'using' 工作流入口全文，其他 skill 一律用 `Skill` 工具调用：\n\n";
 
-  const sessionContext = '<EXTREMELY-IMPORTANT>\n' + preamble + skillContent + '\n</EXTREMELY-IMPORTANT>';
+  const sessionContext = '<workflow-routing>\n' + preamble + skillContent + '\n</workflow-routing>';
 
   emit({
     hookSpecificOutput: {

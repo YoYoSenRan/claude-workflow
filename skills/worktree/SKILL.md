@@ -48,6 +48,8 @@ git worktree list                                   # 查看
 
 ## 输出格式
 
+声明用 A 风格：进行打头 `> **🔧 worktree** — <隔离目的>`。
+
 创建前：
 
 ```text
