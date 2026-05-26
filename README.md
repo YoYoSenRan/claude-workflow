@@ -146,7 +146,7 @@ npm run install:github
 | [`finish`](skills/finish/SKILL.md) | 提交、PR、保留、丢弃决策 |
 | [`review`](skills/review/SKILL.md) | 代码评审,Findings 先行 |
 | [`worktree`](skills/worktree/SKILL.md) | 隔离工作区规则 |
-| [`subagent`](skills/subagent/SKILL.md) | 子代理调度边界 |
+| [`subagent`](skills/subagent/SKILL.md) | 按计划执行独立任务的子代理驱动开发 |
 | [`skill`](skills/skill/SKILL.md) | 维护本插件 skill |
 | [`setup`](skills/setup/SKILL.md) | 扫描项目生成 `.claude/rules`、`.claude/skills`（含 `references/` 子目录） |
 

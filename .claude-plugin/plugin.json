@@ -1,5 +1,6 @@
 {
   "name": "claude-workflow",
+  "version": "0.1.0",
   "description": "Chinese-first Claude Code workflow skills, routing rules, and SessionStart hook.",
   "author": {
     "name": "macos"

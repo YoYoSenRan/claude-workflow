@@ -1,90 +1,105 @@
 ---
 name: review
-description: "用户要求代码评审、审查 diff、检查 PR，或收到评审反馈需要处理时使用；发现项 先行，优先找 bug、回归、安全风险和缺失测试。不处理显式子代理调度请求。"
+description: 在完成任务、实现重要功能或合并前用于验证工作是否满足需求
 ---
 
-## 子代理辅助模式
+# 申请代码评审
 
-被派遣做代码评审时，只返回 发现项、开放问题和剩余风险；不执行修复、提交、推送、收尾或自行转入实现。
+派发一个代码评审员子代理，在问题级联放大之前抓住它们。评审员获取的是为评估精心构造的上下文——绝不是你会话的历史。这让评审员聚焦于工作产物本身，而不是你的思考过程，也保留了你自己的上下文以便继续工作。
 
-# 代码评审
+**核心原则：** 早评审、多评审。
 
-review 只做两类事：评审代码，或处理已经收到的评审反馈。不实现新功能、不排查未知根因、不收尾提交。
+如果用户给的是已经收到的代码评审反馈，而不是要求你发起评审，先阅读 `references/receiving-feedback.md`。
 
-<HARD-GATE>
-评审输出必须 发现项 先行。不要先写总结、夸赞、改动概述。
+## 何时申请评审
 
-没有证据的意见不能当问题。每个问题必须指向具体文件和行号；没有稳定行号时，指向章节、diff hunk、函数名或用户贴出的片段，并说明行为风险或测试缺口。
-</HARD-GATE>
+**强制：**
+- 子代理驱动开发中每个任务之后
+- 完成重要功能之后
+- 合并到 main 之前
 
-## 何时使用
+**可选但有价值：**
+- 卡住时（新视角）
+- 重构之前（基线检查）
+- 修复复杂 bug 之后
 
-用户说“review / 帮我审一下 / 看看这个 diff / 检查 PR”；贴了评审反馈要求判断或处理；问某改动有没有风险；合并前从 bug / 回归 / 安全 / 测试角度审一遍。
+## 如何申请
 
-不使用：bug 根因不明（`debug`）；按计划实现（`execute`）；完成前确认可交付（`verify`）；明确要求派子代理 review（先 `subagent`）；收尾提交或 PR（`finish`）。
-
-## 评审流程
-
-1. **确认范围** — diff、文件、分支、PR 或用户贴出的反馈。
-2. **读上下文** — 至少读相关 diff 和被影响文件，不能只看文件名。
-3. **按风险审查** — bug、行为回归、安全、数据损坏、缺失测试优先。
-4. **写 发现项** — 有问题按严重性排序。
-5. **列开放问题** — 只有确实影响判断时才列。
-6. **补摘要** — 放最后且简短。
-
-没发现问题就直接说没有阻塞问题，并说明未覆盖的风险。
-
-## 发现项 格式
-
-```text
-- [严重性] 文件:行号 — 问题标题
-  为什么是 bug / 回归 / 安全风险 / 测试缺口；触发条件和影响。
+**1. 获取 git SHA：**
+```bash
+BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
+HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-没有稳定行号时把 `文件:行号` 换成 `文件或片段上下文`。
+**2. 派发代码评审员子代理：**
 
-严重性：`高`=错误行为 / 数据损坏 / 安全 / 构建测试失败；`中`=明显回归 / 边界失败 / 缺关键测试；`低`=可维护性或小范围不一致。
+使用 Claude Code 的 `Agent` 工具，填写 `code-reviewer.md` 中的模板。
 
-规则：不写没证据的“可能有问题”；不把风格偏好包装成 bug；不因命名 / 格式 / 主观偏好给阻塞意见；同类问题合并。
+**占位符：**
+- `{DESCRIPTION}` - 简要总结你构建了什么
+- `{PLAN_OR_REQUIREMENTS}` - 它应当做什么
+- `{BASE_SHA}` - 起始提交
+- `{HEAD_SHA}` - 结束提交
 
-## 接收评审反馈
+**3. 根据反馈行动：**
+- 立即修复关键问题
+- 在继续之前修复重要问题
+- 把次要问题记下来留到以后
+- 评审员错了就回推（带理由）
 
-用户贴出别人的 review 意见时：先判断是否成立 → 成立给最小修复建议 → 不成立说明原因和证据 → 含糊则要求补上下文不盲改 → 要执行修改转 `think` / `execute` / `debug`，不在 `review` 内擅自实现。
+## 示例
 
-## 输出结构
+```
+[Just completed Task 2: Add verification function]
 
-声明用 A 风格：进行打头 `> **🔧 review** — <评审范围>`，发现项即正文。
+You: Let me request code review before proceeding.
 
-有问题：
+BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
+HEAD_SHA=$(git rev-parse HEAD)
 
-```text
-发现项
-- [高] path/to/file.ts:42 — 标题
-  说明...
+[Dispatch code reviewer subagent]
+  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
+  PLAN_OR_REQUIREMENTS: Task 2 from docs/plans/deployment-plan.md
+  BASE_SHA: a7981ec
+  HEAD_SHA: 3df7661
 
-开放问题
-- ...
+[Subagent returns]:
+  Strengths: Clean architecture, real tests
+  Issues:
+    Important: Missing progress indicators
+    Minor: Magic number (100) for reporting interval
+  Assessment: Ready to proceed
 
-摘要
-简短说明审查范围。
+You: [Fix progress indicators]
+[Continue to Task 3]
 ```
 
-无问题：
+## 与工作流集成
 
-```text
-发现项
-未发现阻塞问题。
+**子代理驱动开发：**
+- 每个任务后评审
+- 在问题叠加前抓住它们
+- 在进入下一任务前修复
 
-剩余风险
-- 未运行测试 / 未覆盖某路径 / 只审查了指定 diff。
-```
+**执行方案：**
+- 在每个任务后或自然检查点处评审
+- 获取反馈、应用、继续
+
+**临时开发：**
+- 合并前评审
+- 卡住时评审
 
 ## 警示信号
 
-| 念头 | 现实 |
-|---|---|
-| "先总结一下改了什么" | review 要 发现项 先行。 |
-| "这里写法我不喜欢" | 偏好不是 bug。 |
-| "感觉可能有问题" | 没有证据就不要列 finding。 |
-| "反馈看起来对，直接改吧" | 先验证反馈是否成立。 |
-| "没问题就夸一下" | 没问题时说清剩余风险即可。 |
+**绝不：**
+- 因为"简单"而跳过评审
+- 忽视关键问题
+- 带着未修复的重要问题继续
+- 与有效的技术反馈争辩
+
+**评审员错了时：**
+- 用技术推理回推
+- 出示证明可行的代码/测试
+- 请求澄清
+
+参见模板：review/code-reviewer.md

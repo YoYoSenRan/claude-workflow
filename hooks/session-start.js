@@ -56,9 +56,14 @@ function main() {
 
   const preamble =
     '<EXTREMELY-IMPORTANT>\n' +
-    '收到每个请求先路由：选能安全完成任务的最小流程。\n' +
-    '命中某 skill → 必须用 `Skill` 工具加载全文再执行；不凭记忆、不凭下方摘要直接动手。\n' +
-    '用主流程 skill 时明说「正在用 <skill> 来 <目的>」。\n' +
+    '你有 Claude Workflow。\n' +
+    '在任何回复、澄清提问、读文件、跑命令或编辑前，先检查是否有 workflow skill 或项目 skill 可能适用。\n' +
+    '只要有 1% 可能适用，必须用 `Skill` 工具加载当前版本；不得凭记忆或下方摘要执行。\n' +
+    '任务简单、规则记得、先看一眼、先跑个命令，都不是跳过 Skill 的理由。\n' +
+    'think 只负责对齐和判断；用户确认方向后进入 plan，不在 think 里实现。\n' +
+    'plan 可用轻量内联计划，但加载 plan 后必须先给计划并等执行确认，不得直接写文件。\n' +
+    '完成声明前必须用 verify；timeout、截断输出、无退出码都不是通过证据。\n' +
+    '用户可见回复只说任务动作；不要提 Skill、技能名或"加载"，除非用户正在讨论 workflow 本身。\n' +
     '</EXTREMELY-IMPORTANT>\n\n' +
     "下方是 'using' 工作流入口全文，其他 skill 一律用 `Skill` 工具调用：\n\n";
 

@@ -1,5 +1,9 @@
 # Coding Habits Profile
 
+读取时机：`setup` 需要从代码样例提取编码习惯、质量门或候选 rules / skills 时读取；只做路径索引时不要读取。
+
+产出：习惯矩阵、强度判断和 rules / skills / references 落点建议。
+
 用这个文件执行编码习惯扫描。不要把它当说明文读；按步骤做，产出习惯矩阵，再决定生成哪些 rules、skills 和 references。
 
 ## 执行步骤

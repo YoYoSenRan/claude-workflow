@@ -54,11 +54,11 @@ paths:
   - "components/**/*.{ts,tsx}"
 ---
 
-# Frontend Rules
+# UI Rules
 
-- 新组件必须复用当前项目已有组件组织方式。
-- 样式写法以相邻组件为准。
-- 交互变更需要补充组件测试或浏览器验证步骤。
+- 新界面入口必须复用当前项目已有组织方式。
+- 展示和交互写法以相邻实现为准。
+- 交互变更需要补充适合当前项目的自动验证或人工核对步骤。
 ```
 
 ## 文件建议
@@ -69,7 +69,7 @@ paths:
 | `commands.md` | 常用命令选择和验证规则 |
 | `code-style.md` | 通用代码风格和抽象边界 |
 | `testing.md` | 测试和替代验证规则 |
-| `frontend.md` | UI / 组件路径规则 |
+| `ui.md` | UI / 界面路径规则 |
 | `api.md` | API / service 路径规则 |
 | `database.md` | schema / migration / query 路径规则 |
 

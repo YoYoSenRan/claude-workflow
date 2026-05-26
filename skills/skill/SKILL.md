@@ -1,66 +1,67 @@
 ---
 name: skill
-description: "创建、修改或评审 Claude Workflow skill 时使用；包括 SKILL.md、description 触发边界、上下文重量、using 路由、架构同步和发布前验证。"
+description: 用于创建新技能、编辑现有技能，或在部署前验证技能是否生效
 ---
 
-## 子代理辅助模式
+# 编写技能
 
-被派遣评审 skill 时，用本 skill 的只读评审模式。只返回问题、证据和建议；不修改文件、批准发布或宣布 workflow 已完成。
+## 概述
 
-# Skill 写作
+技能不是说明文，而是让模型在特定任务里稳定行动的行为协议。
 
-skill 维护 Claude Workflow 本身。只处理 skill 的创建、修改、评审和测试，不处理普通业务代码。
+**核心原则：** 先证明没有技能时会失败，再写最小技能堵住失败路径，最后验证它真的会被触发和遵守。
 
-声明用 A 风格：进行打头 `> **🔧 skill** — <维护目的>`。
+## 何时创建或修改技能
 
-## 何时使用
+适合：
+- 某类任务会反复出现，且普通提示容易遗漏步骤
+- 模型有稳定的错误倾向或自我合理化
+- 需要按需加载的领域规则、流程或模板
 
-新增 / 修改 / 重命名 / 删除 skill；检查 skill 是否好用或会误触发；改 `skills/*/SKILL.md`、`skills/using/SKILL.md` 或 references；调整 `description`、触发边界、子代理边界或 using 路由；发布前检查结构。
+不适合：
+- 一次性项目观察
+- 已经能用代码、lint、测试、hook 强制的机械规则
+- 单个项目的长期背景说明（优先写 `CLAUDE.md` 或项目规则）
 
-不使用：普通代码实现 / debug / review；项目专属编码规范（放项目级 `CLAUDE.md` 或项目 skill）；能用脚本强制检查的机械规则（优先自动化）。
+## 写法要求
 
-## 核心原则
+1. `name` 与目录名一致，只用字母、数字、连字符。
+2. `description` 只写触发条件，不总结工作流。
+3. 正文写动作链、停止条件、反模式和必要模板。
+4. 长示例、矩阵、报告放 `references/`，且必须被 `SKILL.md` 明确说明何时读取。
+5. 不要写空泛理念、项目游记、无触发条件的资料堆叠。
 
-- **值得才新增**：只有跨项目复用、会反复影响 agent 行为、且非项目专属知识时，才做全局 skill。
-- **description 只写触发条件**，不总结流程，否则模型可能只按 description 行动而跳过正文。
-- **正文只写当前 skill 职责**；跨 skill 跳转写在“与其他 skill 的关系”。
-- **using 只做入口路由**；新增主流程 skill 时才更新 using 路由表。
-- **只验证确定性结构**，不把 prompt 行为样例当测试。
+## Description 规则
 
-## 新增 skill 清单
+`description` 决定模型是否加载技能，所以要写“什么时候用”，不要写“技能会做什么”。
 
-- [ ] 这个能力不是已有 skill 的一小段规则；
-- [ ] 不是项目专属知识；
-- [ ] 名称短清晰，目录名和 frontmatter `name` 一致；
-- [ ] `description` 只描述何时使用；
-- [ ] 正文含何时使用 / 何时不使用 / 流程 / 停止条件或验证方式；
-- [ ] 子代理边界二选一：含决策或写操作的 skill 用 `SUBAGENT-STOP`（让子代理跳过），有只读子任务价值的 skill 用 `子代理辅助模式`（给只读模式）；
-- [ ] 如需入口路由，更新 `skills/using/SKILL.md`；
-- [ ] 更新静态检查中的 expected skill 列表；
-- [ ] 运行 `npm run validate`。
+```yaml
+# 好：触发条件明确
+description: 在遇到任何 bug、测试失败或意外行为时使用，先于提出修复方案
 
-## 修改 skill 清单
+# 差：把流程写进 description，模型可能不再读取正文
+description: 调试时先读错误、复现、找根因、写测试、修复并验证
+```
 
-先读当前文件，不凭记忆改。重点检查：触发条件是否过宽导致小改被流程化；是否把技术栈 / 框架 / 项目习惯写进全局 skill；是否与 think / plan / execute / debug / verify 职责重叠；是否引入无法验证的承诺；是否要求不存在的 agent / hook / command / 工具；是否让子代理承担主智能体决策。
+## 最小流程
 
-## 常见错误
+1. 写 2-3 个压力 prompt：正例、反例、容易跳过的逃逸例。
+2. 不带技能跑一遍，记录模型哪里失败。
+3. 只针对这些失败写或改 `SKILL.md`。
+4. 带技能再跑同样 prompt，确认会触发、用户可见回复自然、会按正文行动。
+5. 检查没有空引用、没有过期 skill 名、没有指向不存在的 reference。
 
-| 错误 | 修正 |
-|---|---|
-| 新增 skill 只为一个项目 | 放项目级 `CLAUDE.md` 或项目 skill |
-| description 写完整流程 | 改成触发条件 |
-| using 里复制所有 skill 细节 | using 只保留路由和调用纪律 |
-| 把 prompt 样例当测试 | 只保留确定性静态检查；行为问题靠实际使用反馈调整 |
-| skill 要求“始终”执行 | 写清例外和轻量路径 |
-| 修改 skill 后不验证 hook | 运行 `npm run validate` |
+## 质量检查
 
-## 与其他 skill 的关系
+- 入口能被 `description` 正确触发。
+- 正文能回答：先做什么、何时停止、下一步交给哪个 skill。
+- 该读 reference 的地方写清楚，不需要的 reference 不保留。
+- 规则不和 `using`、`think`、`plan`、`execute`、`verify` 冲突。
+- 改完后运行插件校验。
 
-| 场景 | 使用 |
-|---|---|
-| 判断是否该新增 skill | `skill` |
-| 写复杂实现计划 | `plan` |
-| 执行 skill 改造计划 | `execute` |
-| skill 行为异常或不触发 | `debug` |
-| 完成前验证 skill 结构 | `verify` |
-| 评审 skill diff | `review` |
+## 与其他技能的关系
+
+- 修改流程入口或触发规则前，先理解 `claude-workflow:using`。
+- 修改实现前对齐流程时，先用 `claude-workflow:think`。
+- 修改测试纪律时，先理解 `claude-workflow:test`。
+- 宣称完成前，必须用 `claude-workflow:verify`。

@@ -1,5 +1,9 @@
 # Skill Generation
 
+读取时机：`setup` 已确认某候选具备明确任务触发和执行步骤、准备生成 `.claude/skills/<name>/SKILL.md` 时读取；普通项目画像或单点观察不要读取。
+
+产出：项目 skill 模板、生成价值过滤、reference 归属规则和 examples 模板。
+
 本参考用于生成 `.claude/skills/<name>`。skill 是按需加载的项目任务能力，负责告诉模型在某类任务中加载哪些 rules、阅读哪些代表文件、按什么顺序处理、用什么命令验证。
 
 ## 基本规则
@@ -7,7 +11,7 @@
 - `SKILL.md` 保持短，写触发条件、执行规则和 references 入口。
 - `description` 只写何时触发，不写完整流程。
 - 长示例、证据、文件清单、扫描报告放 `references/`。
-- 每个 skill 必须说明适用场景、执行规则、不要做、验证方式。
+- 每个 skill 必须说明适用场景、前置读取、执行规则、不要做、验证方式、跳过条件。
 - skill 必须能改变模型下一步行为：知道何时加载、先读什么、怎么改、怎么验证、哪些边界不能碰。
 - 每个生成项必须有证据来源；证据不足的候选只进入内部账本，默认不向用户解释该项。
 - 已有 rules 可以被 skill 引用，但不能替代 skill。skill 的价值是按需加载任务入口、操作顺序、证据索引和验证选择。
@@ -30,12 +34,23 @@ description: "处理当前项目 <domain> 相关任务时使用；加载对应 r
 
 - ...
 
+## Workflow 关系
+
+- 通用 workflow 阶段不变：`think` 对齐方向，`plan` 写计划，`execute` 执行计划，`verify` 做完成证据门。
+- 本项目 skill 是按需增强：在对应阶段命中 <任务类型 / 领域 / 风险> 时加载，用来补充项目规则、代表文件和验证选择。
+- 跳过条件：任务只涉及单文件小文本、与本领域规则无关，或已有更具体的项目 skill 命中。
+
+## 前置读取
+
+1. 读相关 rule：`.claude/rules/<domain>.md`（如存在）。
+2. 读目标文件。
+3. 按需读本 skill 明确列出的 references。
+
 ## 执行规则
 
-1. 先读相关 rule：`.claude/rules/<domain>.md`。
-2. 再读目标文件和 `references/examples.md` 中列出的代表文件。
-3. 按本领域执行顺序处理。
-4. 修改后按项目验证 reference 或验证类 skill 选择命令。
+1. 再读 `references/examples.md` 中列出的代表文件。
+2. 按本领域执行顺序处理。
+3. 修改后按项目验证 reference 或验证类 skill 选择命令。
 
 ## 不要做
 
@@ -73,6 +88,7 @@ description: "处理当前项目 <domain> 相关任务时使用；加载对应 r
 | 项目差异 | 这个项目和通用做法哪里不同 |
 | 验证方式 | 改完后应该如何验证 |
 | 失败风险 | 不加载它时模型最可能改错什么 |
+| workflow 价值 | 它会在哪个通用阶段被加载，加载后会改变哪一步 |
 
 答不出来时，不生成 skill；相关证据只放 reference 或 internal。
 

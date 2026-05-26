@@ -1,76 +1,213 @@
 ---
 name: worktree
-description: "开始较大功能、并行任务、风险较高改动，或用户明确要求隔离工作区时使用；优先尊重 Claude Code 原生工作区能力，必要时用 git worktree 兜底。"
+description: 当开始一项需要与当前工作区隔离的功能开发时，或在执行实施方案之前使用 —— 通过原生工具或 git 工作树兜底，确保存在一个隔离的工作区
 ---
 
-<SUBAGENT-STOP>
-如果你是被派来执行具体任务的子代理，请跳过此 skill。隔离工作区应由主智能体在任务开始前决定。
-</SUBAGENT-STOP>
+# 使用 Git 工作树
 
-# 隔离工作区
+## 概述
 
-worktree 保护当前工作区不被较大改动污染。只判断和建立隔离环境，不设计方案、执行计划或收尾提交。
+确保工作发生在一个隔离的工作区中。优先使用你所在平台的原生工作树工具。仅在没有原生工具可用时，再回退到手动 git 工作树。
 
-<HARD-GATE>
-创建或切换工作区前，必须说明目标路径、分支名、当前未提交改动状态和清理方式。
+**核心原则：** 先检测已存在的隔离。然后使用原生工具。再回退到 git。绝不与宿主环境对抗。
 
-当前工作区已有未提交改动时，禁止直接创建会混淆状态的工作树；先让用户确认是否继续、提交、保留或换路径。
-</HARD-GATE>
+## 步骤 0：检测已存在的隔离
 
-## 何时使用
-
-用户明确说“开个 worktree / 隔离工作区 / 新分支做”；较大功能可能持续多轮；并行尝试多个方案；高风险重构 / 迁移 / 批量改动；当前工作区已有重要改动需保护。
-
-不使用：单文件小改；只读分析；已在安全隔离环境中；修一个小 bug 且当前工作区干净。
-
-## 清单
-
-1. **检查状态** — `git status --short`。
-2. **判断是否需要隔离** — 小改不强行 worktree。
-3. **确定目标** — 分支名、路径、基准分支。
-4. **说明并获确认** — 即使用户已明确要求，也先展示路径、分支、状态和清理方式，等确认再建。
-5. **创建工作树** — 用明确命令。
-6. **切换后复核** — 在新路径运行 `git status --short`。
-
-## 默认命名
-
-用户没指定时：分支 `work/<short-task-name>`；路径同级目录 `../<repo-name>-<short-task-name>`；基准为当前分支。命名必须可读、短、只用小写字母、数字和连字符。
-
-## 命令模板
+**在创建任何东西之前，检查你是否已经处于一个隔离的工作区中。**
 
 ```bash
-git worktree add -b work/<name> ../<repo>-<name>   # 新分支 + 工作树
-git worktree add ../<repo>-<name> <branch>          # 基于已有分支
-git worktree list                                   # 查看
+GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
+GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
+BRANCH=$(git branch --show-current)
 ```
 
-清理已合并或不再需要的工作树前，必须先让用户确认具体路径。
+**子模块防护：** `GIT_DIR != GIT_COMMON` 在 git 子模块内部同样成立。在断定"已经在工作树中"之前，先确认你不在子模块中：
 
-## 输出格式
-
-声明用 A 风格：进行打头 `> **🔧 worktree** — <隔离目的>`。
-
-创建前：
-
-```text
-建议使用隔离工作区。
-当前状态：<git status --short 摘要>
-计划：
-- 分支：work/<name>
-- 路径：../<repo>-<name>
-- 基准：<current-branch>
-- 清理：完成后用 git worktree remove <path>
-确认后我再创建。
+```bash
+# If this returns a path, you're in a submodule, not a worktree — treat as normal repo
+git rev-parse --show-superproject-working-tree 2>/dev/null
 ```
 
-不需要隔离时：说明改动小 / 工作区干净 / 不需并行隔离，可直接在当前工作区继续。
+**如果 `GIT_DIR != GIT_COMMON`（且不在子模块中）：** 你已经在一个关联工作树中。跳到步骤 3（项目初始化）。不要再创建另一个工作树。
+
+附带分支状态一起汇报：
+- 在分支上："已位于隔离工作区 `<path>`，分支 `<name>`。"
+- 处于分离 HEAD："已位于隔离工作区 `<path>`（分离 HEAD，由外部管理）。完成时需要创建分支。"
+
+**如果 `GIT_DIR == GIT_COMMON`（或处于子模块中）：** 你在一个普通的仓库 checkout 中。
+
+用户是否已在指令中表达过工作树偏好？如果没有，请先征求同意再创建工作树：
+
+> "需要我搭建一个隔离的工作树吗？它能保护你当前分支不被改动。"
+
+如果已有声明的偏好，遵循它，不再询问。如果用户拒绝授权，原地工作，跳到步骤 3。
+
+## 步骤 1：创建隔离工作区
+
+**你有两种机制。按以下顺序尝试。**
+
+### 1a. 原生工作树工具（首选）
+
+用户已要求一个隔离工作区（步骤 0 已同意）。你是否已经有创建工作树的途径？它可能是一个名为 `EnterWorktree`、`WorktreeCreate` 的工具，一条 `/worktree` 命令，或一个 `--worktree` 选项。如果有，使用它并跳到步骤 3。
+
+原生工具会自动处理目录放置、分支创建与清理。在你拥有原生工具时仍调用 `git worktree add`，会产生宿主环境看不见也管不到的幽灵状态。
+
+仅在没有可用的原生工作树工具时，才进入步骤 1b。
+
+### 1b. Git 工作树兜底
+
+**仅在步骤 1a 不适用时使用** —— 你没有可用的原生工作树工具。手动用 git 创建工作树。
+
+#### 目录选择
+
+按以下优先级。用户的明确偏好始终高于观察到的文件系统状态。
+
+1. **检查指令中是否有声明的工作树目录偏好。** 如果用户已指定，无需询问，直接使用。
+
+2. **检查是否存在项目级工作树目录：**
+   ```bash
+   ls -d .worktrees 2>/dev/null     # Preferred (hidden)
+   ls -d worktrees 2>/dev/null      # Alternative
+   ```
+   如有，使用之。两者都存在时，`.worktrees` 胜出。
+
+3. **检查是否存在全局目录：**
+   ```bash
+   project=$(basename "$(git rev-parse --show-toplevel)")
+   ls -d ~/.config/claude-workflow/worktrees/$project 2>/dev/null
+   ```
+   如有，使用之（与旧全局路径向后兼容）。
+
+4. **若无其他指引可用**，默认使用项目根下的 `.worktrees/`。
+
+#### 安全核验（仅项目级目录）
+
+**创建工作树前必须确认该目录已被忽略：**
+
+```bash
+git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/dev/null
+```
+
+**如果未被忽略：** 先建议把对应目录加入 `.gitignore`，并获得用户确认后再编辑。不要自动提交该变更。
+
+**为何关键：** 防止把工作树内容意外提交进仓库。
+
+全局目录（`~/.config/claude-workflow/worktrees/`）无需核验。
+
+#### 创建工作树
+
+```bash
+project=$(basename "$(git rev-parse --show-toplevel)")
+
+# Determine path based on chosen location
+# For project-local: path="$LOCATION/$BRANCH_NAME"
+# For global: path="~/.config/claude-workflow/worktrees/$project/$BRANCH_NAME"
+
+git worktree add "$path" -b "$BRANCH_NAME"
+cd "$path"
+```
+
+**沙箱兜底：** 如果 `git worktree add` 因权限错误（沙箱拒绝）失败，告诉用户沙箱阻止了工作树创建，你将改为在当前目录工作。然后在原地执行 setup 与基线测试。
+
+## 步骤 3：项目初始化
+
+自动识别并运行合适的初始化命令：
+
+```bash
+# Node.js
+if [ -f package.json ]; then npm install; fi
+
+# Rust
+if [ -f Cargo.toml ]; then cargo build; fi
+
+# Python
+if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+if [ -f pyproject.toml ]; then poetry install; fi
+
+# Go
+if [ -f go.mod ]; then go mod download; fi
+```
+
+## 步骤 4：核验干净的基线
+
+运行测试以确保工作区起始状态干净：
+
+```bash
+# Use project-appropriate command
+npm test / cargo test / pytest / go test ./...
+```
+
+**如果测试失败：** 汇报失败情况，询问是继续还是先调查。
+
+**如果测试通过：** 汇报准备就绪。
+
+### 汇报
+
+```
+Worktree ready at <full-path>
+Tests passing (<N> tests, 0 failures)
+Ready to implement <feature-name>
+```
+
+## 快速参考
+
+| 情况 | 行动 |
+|-----------|--------|
+| 已在关联工作树中 | 跳过创建（步骤 0） |
+| 在子模块中 | 视为普通仓库（步骤 0 的防护） |
+| 有可用的原生工作树工具 | 使用它（步骤 1a） |
+| 无原生工具 | git 工作树兜底（步骤 1b） |
+| `.worktrees/` 存在 | 使用之（确认被忽略） |
+| `worktrees/` 存在 | 使用之（确认被忽略） |
+| 两者都存在 | 使用 `.worktrees/` |
+| 都不存在 | 查阅指令文件，再默认 `.worktrees/` |
+| 全局路径存在 | 使用之（向后兼容） |
+| 目录未被忽略 | 征求确认后加入 .gitignore；不要自动提交 |
+| 创建时遇到权限错误 | 沙箱兜底，原地工作 |
+| 基线测试失败 | 汇报失败 + 询问 |
+| 没有 package.json/Cargo.toml | 跳过依赖安装 |
+
+## 常见错误
+
+### 与宿主环境对抗
+
+- **问题：** 平台已提供隔离时仍使用 `git worktree add`
+- **修复：** 步骤 0 检测已有隔离。步骤 1a 优先使用原生工具。
+
+### 跳过检测
+
+- **问题：** 在已有工作树中又嵌套创建工作树
+- **修复：** 在创建任何东西之前始终运行步骤 0
+
+### 跳过忽略核验
+
+- **问题：** 工作树内容被纳入版本控制，污染 git status
+- **修复：** 创建项目级工作树前始终使用 `git check-ignore`
+
+### 想当然地选目录
+
+- **问题：** 造成不一致，违反项目约定
+- **修复：** 遵循优先级：已存在 > 全局遗留 > 指令文件 > 默认
+
+### 在测试失败时继续
+
+- **问题：** 无法区分新引入的 bug 与既有问题
+- **修复：** 汇报失败，获得明确授权再继续
 
 ## 警示信号
 
-| 念头 | 现实 |
-|---|---|
-| "大任务也可以直接在当前目录做" | 容易污染现有改动，应先考虑隔离。 |
-| "先建了再说" | 路径、分支、清理方式必须先说明。 |
-| "当前有改动但不影响" | 未提交改动会让归属混乱，必须先确认。 |
-| "worktree 建好就继续执行计划" | 建好后应复核路径和状态，再按用户目标进入 `plan` 或 `execute`。 |
-| "清理旧 worktree 很安全" | 删除工作树前必须确认路径和状态。 |
+**绝不：**
+- 在步骤 0 检测到已有隔离时还去创建工作树
+- 拥有原生工作树工具（例如 `EnterWorktree`）时仍使用 `git worktree add`。这是 #1 的错误 —— 有就用它。
+- 跳过步骤 1a 直接跳到步骤 1b 的 git 命令
+- 没核验目录被忽略就创建工作树（项目级）
+- 跳过基线测试核验
+- 不询问就在测试失败时继续
+
+**始终：**
+- 先运行步骤 0 检测
+- 优先原生工具，git 兜底
+- 遵循目录优先级：已存在 > 全局遗留 > 指令文件 > 默认
+- 项目级要核验目录已被忽略
+- 自动识别并运行项目初始化
+- 核验干净的测试基线

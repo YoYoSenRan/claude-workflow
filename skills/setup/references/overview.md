@@ -1,5 +1,9 @@
 # Setup Overview
 
+读取时机：`setup` 做广度扫描、判断生成结构或写项目入口说明时读取；只维护本插件全局 skill 时不要读取。
+
+产出：推荐生成结构、setup 总流程、用户可见输出格式、CLAUDE.md / setup report 模板。
+
 本参考定义 setup 的总体流程。setup 的目标不是补缺文件，而是给当前项目建立 Claude Code 可用的导航系统：rules 提供持续短规则，skills 提供按需加载的任务能力，references 承载长证据和清单。
 
 ## 推荐生成结构
