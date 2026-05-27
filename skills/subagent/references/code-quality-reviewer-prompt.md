@@ -8,7 +8,7 @@
 
 ```
 Agent:
-  Use template at review/code-reviewer.md
+  Use template at skills/review/references/code-reviewer.md
 
   DESCRIPTION: [task summary, from implementer's report]
   PLAN_OR_REQUIREMENTS: Task N from [plan-file]

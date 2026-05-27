@@ -51,14 +51,14 @@ digraph process {
 
     subgraph cluster_per_task {
         label="Per Task";
-        "Dispatch implementer subagent (./implementer-prompt.md)" [shape=box];
+        "Dispatch implementer subagent (references/implementer-prompt.md)" [shape=box];
         "Implementer subagent asks questions?" [shape=diamond];
         "Answer questions, provide context" [shape=box];
         "Implementer subagent implements, tests, reports files, self-reviews" [shape=box];
-        "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [shape=box];
+        "Dispatch spec reviewer subagent (references/spec-reviewer-prompt.md)" [shape=box];
         "Spec reviewer subagent confirms code matches spec?" [shape=diamond];
         "Implementer subagent fixes spec gaps" [shape=box];
-        "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [shape=box];
+        "Dispatch code quality reviewer subagent (references/code-quality-reviewer-prompt.md)" [shape=box];
         "Code quality reviewer subagent approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
         "Write back [x] to plan file + mark TodoWrite complete" [shape=box];
@@ -69,22 +69,22 @@ digraph process {
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
     "Use claude-workflow:finish" [shape=box style=filled fillcolor=lightgreen];
 
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
-    "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
+    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (references/implementer-prompt.md)";
+    "Dispatch implementer subagent (references/implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
-    "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
+    "Answer questions, provide context" -> "Dispatch implementer subagent (references/implementer-prompt.md)";
     "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, reports files, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, reports files, self-reviews" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)";
-    "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" -> "Spec reviewer subagent confirms code matches spec?";
+    "Implementer subagent implements, tests, reports files, self-reviews" -> "Dispatch spec reviewer subagent (references/spec-reviewer-prompt.md)";
+    "Dispatch spec reviewer subagent (references/spec-reviewer-prompt.md)" -> "Spec reviewer subagent confirms code matches spec?";
     "Spec reviewer subagent confirms code matches spec?" -> "Implementer subagent fixes spec gaps" [label="no"];
-    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [label="re-review"];
-    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="yes"];
-    "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
+    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (references/spec-reviewer-prompt.md)" [label="re-review"];
+    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (references/code-quality-reviewer-prompt.md)" [label="yes"];
+    "Dispatch code quality reviewer subagent (references/code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
     "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
-    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
+    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (references/code-quality-reviewer-prompt.md)" [label="re-review"];
     "Code quality reviewer subagent approves?" -> "Write back [x] to plan file + mark TodoWrite complete" [label="yes"];
     "Write back [x] to plan file + mark TodoWrite complete" -> "More tasks remain?";
-    "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
+    "More tasks remain?" -> "Dispatch implementer subagent (references/implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
     "Dispatch final code reviewer subagent for entire implementation" -> "Use claude-workflow:finish";
 }
@@ -135,9 +135,9 @@ digraph process {
 
 ### 提示词模板
 
-- `./implementer-prompt.md` - 分配执行任务的代理
-- `./spec-reviewer-prompt.md` - 分配检查需求符合度的代理
-- `./code-quality-reviewer-prompt.md` - 分配检查代码质量的代理
+- `references/implementer-prompt.md` - 分配执行任务的代理
+- `references/spec-reviewer-prompt.md` - 分配检查需求符合度的代理
+- `references/code-quality-reviewer-prompt.md` - 分配检查代码质量的代理
 
 通过 Claude Code 的 `Agent` 工具分配这些 subagent。不要使用旧称 `Task tool`。
 

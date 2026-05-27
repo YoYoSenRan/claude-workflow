@@ -34,7 +34,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 ### 2. 启动代码评审员
 
-使用 Claude Code 的 `Agent` 工具，填写 `code-reviewer.md` 中的模板。
+使用 Claude Code 的 `Agent` 工具，填写 `references/code-reviewer.md` 中的模板。
 
 **占位符：**
 - `{DESCRIPTION}` - 简要总结你构建了什么
@@ -99,7 +99,7 @@ You: [Fix progress indicators]
 - **按方案执行时：** 每完成一个任务或到了合理的节点就评审
 - **日常开发：** 合并前评审，卡住时也可以评审换个视角
 
-**模板：** `review/code-reviewer.md`
+**模板：** `references/code-reviewer.md`
 
 ## 沟通规范
 - 用户看不到工具调用和思考过程，只看到你的文字输出
