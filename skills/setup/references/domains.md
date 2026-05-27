@@ -17,7 +17,7 @@
 ## 命名规则
 
 - 使用项目自己的词汇：例如 `components`、`decoration`、`store`、`platform`、`brand`。
-- 不要把所有前端项目都叫 `ui`。
+- 不要用笼统的名字覆盖整个项目（如 `ui`、`backend`、`core`）。
 - 不要把所有请求封装都叫 `api`。
 - 不要在没有数据库层的项目里生成 `data`。
 - 不要给 skill 加 `project-` 前缀。
@@ -38,10 +38,15 @@
 
 按项目实际证据命名，下面只作为识别方向：
 
-- uniapp / 多端应用：可能生成 `platform`、`components`、`store`、`brand`、`decoration`。
-- 组件库：可能生成 `components`、`styling`、`docs`、`release`。
+- 多端应用：可能生成 `platform`、`components`、`store`、`brand`。
+- 组件 / 模块库：可能生成 `components`、`styling`、`docs`、`release`。
 - CLI / 工具库：可能生成 `cli`、`config`、`release`、`verification`。
 - 后端服务：可能生成 `api`、`data`、`jobs`、`observability`。
+- 数据管道 / ETL：可能生成 `ingestion`、`transform`、`scheduling`、`monitoring`。
+- 机器学习项目：可能生成 `training`、`dataset`、`evaluation`、`serving`。
+- 游戏项目：可能生成 `engine`、`assets`、`gameplay`、`networking`。
+- 嵌入式 / IoT：可能生成 `drivers`、`protocol`、`firmware`、`board`。
+- 基础设施 / IaC：可能生成 `provisioning`、`networking`、`secrets`、`deployment`。
 
 ## 合并规则
 

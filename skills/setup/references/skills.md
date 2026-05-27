@@ -96,10 +96,13 @@ description: "处理当前项目 <domain> 相关任务时使用；加载对应 r
 
 skill 没有固定清单。按项目真实任务能力、核心框架、工作流程或高频领域生成，例如：
 
-- uniapp 项目可能是 `platform`、`components`、`store`、`brand`、`decoration`；
-- 组件库可能是 `components`、`styling`、`docs`、`release`；
+- 多端应用可能是 `platform`、`components`、`store`、`brand`；
+- 组件 / 模块库可能是 `components`、`styling`、`docs`、`release`；
 - CLI / 工具库可能是 `cli`、`config`、`release`、`verification`；
-- 后台或 API 服务才可能需要 `api`、`data`、`jobs`。
+- 后端服务可能是 `api`、`data`、`jobs`、`observability`；
+- 数据管道可能是 `ingestion`、`transform`、`scheduling`；
+- 机器学习项目可能是 `training`、`dataset`、`evaluation`；
+- 嵌入式项目可能是 `drivers`、`protocol`、`firmware`。
 
 不要因为示例里出现某个名字，就在不相关项目中生成它。
 

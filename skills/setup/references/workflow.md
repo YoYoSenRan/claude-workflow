@@ -20,7 +20,7 @@
 1. 文件索引：顶层目录、`.claude/`、docs、scripts、tests、CI、配置、主要源码。
 2. 读取显式规则：CLAUDE.md / AGENTS.md / README / CONTRIBUTING / docs / `.claude/rules/`。
 3. 读取项目配置：package / workspace / tsconfig / lint / format / test / build / CI。
-4. 识别 UI / API / data / config / test / docs / refactor 等任务类型质量门。
+4. 识别项目中的任务类型和对应质量门。
 5. 整理命令入口。
 6. 形成初步候选清单。
 7. 读取 `agents.md`，按条件派发只读 setup agents。

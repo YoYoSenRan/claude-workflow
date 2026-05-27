@@ -50,15 +50,14 @@
 ```markdown
 ---
 paths:
-  - "src/**/*.{ts,tsx}"
-  - "components/**/*.{ts,tsx}"
+  - "src/modules/**/*.{ts,py,go,rs}"
 ---
 
-# UI Rules
+# Module Rules
 
-- 新界面入口必须复用当前项目已有组织方式。
-- 展示和交互写法以相邻实现为准。
-- 交互变更需要补充适合当前项目的自动验证或人工核对步骤。
+- 新模块入口必须复用当前项目已有组织方式。
+- 写法以相邻同类实现为准。
+- 行为变更需要补充适合当前项目的自动验证或人工核对步骤。
 ```
 
 ## 文件建议
@@ -69,8 +68,6 @@ paths:
 | `commands.md` | 常用命令选择和验证规则 |
 | `code-style.md` | 通用代码风格和抽象边界 |
 | `testing.md` | 测试和替代验证规则 |
-| `ui.md` | UI / 界面路径规则 |
-| `api.md` | API / service 路径规则 |
-| `database.md` | schema / migration / query 路径规则 |
+| `<domain>.md` | 按项目实际领域命名，例如界面层、服务层、数据层等路径规则 |
 
 只生成项目实际需要的 rules。
