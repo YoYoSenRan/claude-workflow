@@ -16,12 +16,14 @@
 
 ## 命名规则
 
-- 使用项目自己的词汇：例如 `components`、`decoration`、`store`、`platform`、`brand`。
-- 不要用笼统的名字覆盖整个项目（如 `ui`、`backend`、`core`）。
-- 不要把所有请求封装都叫 `api`。
-- 不要在没有数据库层的项目里生成 `data`。
-- 不要给 skill 加 `project-` 前缀。
-- 只有领域名称过于底层或重叠时，才合并成更通用的 skill。
+- 优先用一个常见的语义化英文单词：`routing`、`auth`、`testing`、`deploy`、`crud`
+- 只在一个词表达不清时才用连字符连接多个词：`error-handling`、`code-style`
+- 使用项目自己的词汇：例如 `components`、`store`、`platform`、`brand`
+- 不要用笼统的名字覆盖整个项目（如 `ui`、`backend`、`core`）
+- 不要把所有请求封装都叫 `api`
+- 不要在没有数据库层的项目里生成 `data`
+- 不要给 skill 加 `project-` 前缀
+- 只有领域名称过于底层或重叠时，才合并成更通用的 skill
 
 ## 领域候选来源
 
