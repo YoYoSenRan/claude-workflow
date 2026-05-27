@@ -218,6 +218,32 @@ git worktree prune  # Self-healing: clean up any stale registrations
 | 清理不是你创建的工作树 | 留下不可控的残留 | 只清理位于已知路径之下的工作树 |
 | 丢弃时无确认 | 意外删除工作成果 | 要求输入 "discard" 进行确认 |
 
+## 第 7 步：生成交接摘要
+
+无论用户选了哪个选项，最后都生成一份交接文档保存到 `.claude/last-session.md`，方便下次新会话快速恢复上下文。
+
+```markdown
+# 上次会话交接
+
+**日期：** YYYY-MM-DD
+**分支：** <branch-name>
+**状态：** <已合并 / 已推送 PR / 保留中 / 已丢弃>
+
+## 做了什么
+- <简要描述完成的工作>
+
+## 改了哪些文件
+- <文件列表>
+
+## 还没做的
+- <剩余任务或已知问题，没有就写"无">
+
+## 设计决策
+- <会话中做出的重要决策，下次需要知道的上下文>
+```
+
+如果 `.claude/` 目录不存在就跳过这一步。
+
 ## 集成
 
 - **claude-workflow:execute** / **claude-workflow:subagent** —— 完成所有任务后调用本技能
