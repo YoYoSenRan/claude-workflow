@@ -1,214 +1,170 @@
 ---
 name: plan
-description: 当你已有一份规格说明或多步任务的需求时，在动手写代码之前使用
+description: 当 think 判断为复杂任务时使用——编写设计 + 实现方案，保存到文件，用于跨会话追踪和子代理执行
 ---
 
-# 编写方案
-
-## 概述
-
-编写全面的实现方案，假设工程师对我们的代码库零上下文且品味存疑。把他们需要知道的一切都写清楚：每个任务要改哪些文件、代码、测试、他们可能要看的文档、如何测试。把整个方案拆成口大小的任务给他们。DRY、YAGNI、TDD、清晰检查点。
-
-假设他们是熟练的开发者，但对我们的工具链或问题领域几乎一无所知。假设他们对良好的测试设计也不太熟悉。
+# 编写设计与实现方案
 
 <HARD-GATE>
-一旦加载 plan，就必须先给出计划，再进入任何写文件、跑实现命令或修改代码的动作。
+一旦加载 plan，就必须先写完方案并获得用户确认，再进入任何实现动作。
 
-文件数量、"纯 UI"、"不值得写 docs/plans" 都不能成为跳过 plan 的理由，也不能单独决定计划形式。必须先判断风险和不确定性。
-
-用户只确认了 think 的设计方向，不等于批准你执行实现。给出 plan 后必须等待用户明确批准执行，除非用户在同一句里已经明确说"直接实现/按计划执行/继续写代码"。
+给出方案后必须等待用户明确批准执行，除非用户在同一句里已经明确说"直接实现/按计划执行/继续写代码"。
 </HARD-GATE>
 
-**上下文：** 如果在隔离的工作树中工作，该工作树应已在执行时通过 `claude-workflow:worktree` 技能创建。
+编写包含设计和实现步骤的完整方案。假设执行者对代码库零上下文——把他们需要知道的一切写清楚。
 
-**方案保存至：** `docs/plans/YYYY-MM-DD-<feature-name>.md`
-- （用户对方案位置的偏好会覆盖此默认值）
+**方案保存至：** `docs/plans/YYYY-MM-DD-<feature-name>.md`（用户偏好会覆盖此默认值）
 
-## 先判断计划大小
+## 何时使用
 
-不要用文件数量判断复杂度。一个文件也可能很复杂；多个文件也可能只是机械同步。先看风险和不确定性，再选择计划形式。
+仅当 think 判断为复杂任务时：
+- 多个子任务、跨子系统
+- 可能跨会话、需要进度追踪
+- 需要子代理分工或别人接手
 
-同时满足这些条件，才可以选择轻量计划：
+简单/中等任务不走 plan，由 think 确认后直接实现。
 
-- 目标和成功标准已经清楚。
-- 影响面小：不触及长期保存的数据、公共接口、权限、安全、配置、构建或发布。
-- 方案已经定下，没有未决路线。
-- 可以连续完成，失败后不需要专门的恢复步骤。
-- 验证方式简单明确。
-- 不涉及长期占用资源、外部回调、连接、句柄或后台工作。
-- 不需要别人接着做，也不需要以后回头查设计理由。
+## 流程
 
-## 计划形式
+### 范围检查
 
-全部满足时，才用**轻量内联计划**。轻量计划仍然要写清文件、改动、验证和风险，并等待用户确认。
+如果需求涵盖多个独立子系统，建议拆成独立方案——每个子系统一个。每个方案应能独立得到可运行、可测试的软件。
 
-轻量内联计划不用写成文件，直接在回复中给出：
+### 设计部分
 
-```text
-轻量实现计划：
-1. 文件：`path/to/file`
-2. 改动：
-   - ...
-3. 验证：
-   - `command`，预期 ...
-4. 风险：
-   - ...
+在写任务之前，先回答"做什么"和"为什么这么做"：
 
-确认后我再执行。
-```
+- **目标** — 一句话说清要构建什么
+- **架构** — 组件、数据流、关键技术选型
+- **方案取舍** — 为什么选这个方案、放弃了什么（2-3 句话够了，不要写论文）
+- **文件结构** — 梳理要创建或修改的文件和每个文件的职责
 
-任一条件不满足时，使用**文档计划**。
+设计原则：
+- 每个文件一个明确职责，通过定义良好的接口通信
+- 一起变化的文件放在一起，按职责拆分而不是按技术分层
+- 在已有代码库中遵循既有模式
+- YAGNI——只设计需要的东西
 
-文档计划保存到 `docs/plans/YYYY-MM-DD-<feature-name>.md`。
+### 任务拆解
 
-## 范围检查
+基于文件结构把实现拆成任务。每个任务独立可理解。
 
-如果规格涵盖多个独立子系统，本应在头脑风暴阶段拆分成子项目规格。如果没有拆，建议将其拆成独立方案——每个子系统一个方案。每个方案都应能独立得到可运行、可测试的软件。
+步骤按自然顺序排列，靠位置表达依赖——上一步完成才做下一步。
 
-## 文件结构
-
-在定义任务之前，先梳理将要创建或修改的文件以及每个文件的职责。这是拆解决策被锁定的环节。
-
-- 设计具有清晰边界和良好定义接口的单元。每个文件应承担一个明确职责。
-- 你对能一次容纳在上下文里的代码推理最佳，且当文件聚焦时你的编辑更可靠。优先采用更小、聚焦的文件，而不是承担过多的大文件。
-- 一起变化的文件应放在一起。按职责拆分，而不是按技术分层。
-- 在已有代码库中遵循既有模式。若代码库使用大文件，不要单方面重组——但如果你正在修改的文件已经变得难以维护，把拆分纳入方案是合理的。
-
-这种结构指导任务拆解。每个任务都应得到自包含、独立可理解的变更。
-
-## 口大小的任务粒度
-
-**每一步是一个动作（2-5 分钟）：**
-- "写失败的测试" - 一步
-- "运行确认它失败" - 一步
-- "实现使测试通过的最小代码" - 一步
-- "运行测试确认通过" - 一步
-- "更新任务状态并汇报验证结果" - 一步
-
-## 方案文档头
-
-**每个方案必须以此头开始：**
+### 方案文件格式
 
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use claude-workflow:subagent (recommended) or claude-workflow:execute to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Use claude-workflow:subagent (recommended) or claude-workflow:execute to implement this plan. Steps use checkbox syntax for tracking. **Executors must write back `[x]` to this file as steps complete — this file is the single source of truth for progress.**
 
-**Goal:** [One sentence describing what this builds]
+## 设计
 
-**Architecture:** [2-3 sentences about approach]
+**Goal:** [One sentence]
+
+**Architecture:** [Components, data flow, key decisions]
 
 **Tech Stack:** [Key technologies/libraries]
 
----
-```
-
-## 任务结构
-
-````markdown
-### Task N: [Component Name]
+**Tradeoffs:** [Why this approach, what was rejected]
 
 **Files:**
-- Create: `exact/path/to/file.py`
-- Modify: `exact/path/to/existing.py:123-145`
-- Test: `tests/exact/path/to/test.py`
+- Create: `exact/path/to/file`
+- Modify: `exact/path/to/existing`
+- Test: `tests/exact/path/to/test`
 
-- [ ] **Step 1: Write the failing test**
+---
 
-```python
-def test_specific_behavior():
-    result = function(input)
-    assert result == expected
+## 任务
+
+### Task 1: [Component Name]
+
+**Files:**
+- `exact/path/to/file`
+- `tests/path/to/test`
+
+- [ ] 写失败的测试
+
+  [code block with actual test code]
+
+  Run: `test command` — expected FAIL
+
+- [ ] 写最小实现使测试通过
+
+  [code block with actual implementation]
+
+  Run: `test command` — expected PASS
+
+- [ ] 按需重构
+
+  Run: `test command` — all PASS, no regressions
+
+### Task 2: [Next Component]
+...
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+### 自评审
 
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: FAIL with "function not defined"
+写完方案后回看一遍：
 
-- [ ] **Step 3: Write minimal implementation**
+1. **需求覆盖：** 每条需求都能指向一个任务吗？列出缺口。
+2. **占位符扫描：** "TBD"、"TODO"、"implement later"、"add validation"、没有代码块的代码步骤——都是方案失败。修掉。
+3. **一致性：** 后面任务用到的名称是否与前面任务定义的一致？
 
-```python
-def function(input):
-    return expected
-```
+发现问题就地修复，修完就走。
 
-- [ ] **Step 4: Run test to verify it passes**
+### 执行交接
 
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: PASS
+**"方案已保存到 `docs/plans/<filename>.md`。两种执行方式：**
 
-- [ ] **Step 5: Update task status**
+**1. 子代理驱动（推荐）** — 每个任务派发新子代理，任务间评审
 
-Report files changed, tests run, and whether the task is ready for review.
-````
+**2. 内联执行** — 在当前会话逐步执行
 
-## 不允许占位符
+**选哪种？"**
 
-每一步都必须包含工程师实际需要的内容。以下都是**方案失败**——永远不要这样写：
+**若选择子代理驱动：** 使用 claude-workflow:subagent
+
+**若选择内联执行：** 使用 claude-workflow:execute
+
+**回写规则：**
+- execute/subagent 完成一步后，把 `- [ ]` 改为 `- [x]` 写回 plan 文件
+- 失败时在步骤下追加 `  - ❌ failed: <错误信息>`
+- plan 文件是进度的唯一真相来源，TodoWrite 仅作会话内显示
+
+<constraints>
+不允许占位符——每一步都必须包含执行者实际需要的内容。以下都是方案失败：
 - "TBD"、"TODO"、"implement later"、"fill in details"
 - "Add appropriate error handling" / "add validation" / "handle edge cases"
 - "Write tests for the above"（没有实际测试代码）
-- "Similar to Task N"（重复写出代码——工程师可能不按顺序读取任务）
+- "Similar to Task N"（重复写出代码——执行者可能不按顺序读取任务）
 - 描述了做什么却不展示怎么做的步骤（代码步骤必须有代码块）
-- 引用了任何任务中均未定义的类型、函数或方法
+
+其他禁止行为：
+- 禁止在方案中默认写 `git commit`、push 或 PR 步骤（只有用户明确要求时才加入）
+- 禁止用"通常不会发生"跳过资源释放/清理策略
+</constraints>
+
+## 警示信号
+
+| 念头 | 现实 |
+|---|---|
+| "设计已确认，直接实现" | plan 批准不是执行批准，等用户确认 |
+| "先写代码，再补方案" | 先计划，后执行 |
+| "通常不会销毁，不用清理" | 写清释放/清理策略 |
+| "这步差不多就行" | 每步必须有完整代码和验证命令 |
+
+## 集成
+
+- **claude-workflow:think** —— think 判断为复杂任务后调用本技能
+- **claude-workflow:subagent**（推荐）—— 子代理驱动执行方案
+- **claude-workflow:execute** —— 内联执行方案
+- **claude-workflow:worktree** —— 执行前确保隔离工作区
 
 ## 记住
+
 - 始终给出确切文件路径
 - 每一步都包含完整代码——如果该步骤变更代码，就把代码写出来
 - 给出确切命令与预期输出
 - DRY、YAGNI、TDD、清晰检查点
-- 不要在方案中默认写 `git commit`、push 或 PR 步骤；只有用户明确要求提交时才加入。
-- 如果本次触碰会持续占用资源、注册外部回调、打开连接、持有句柄或启动后台工作的逻辑，释放/清理策略属于本次改动范围；不要用"通常不会发生"或"保持改动最小"当作跳过理由。
-
-## 自评审
-
-在写完整个方案后，以新的眼光看一遍规格并核对方案。这是你自己跑的清单——不是派发子代理。
-
-**1. 规格覆盖：** 浏览规格中的每一节/每一项需求。你能指出哪个任务实现了它吗？列出所有缺口。
-
-**2. 占位符扫描：** 在你的方案中搜索警示信号——上文"不允许占位符"一节里的任何模式。修复它们。
-
-**3. 类型一致性：** 你在后面任务里用到的类型、方法签名和属性名是否与你在前面任务里定义的一致？Task 3 里叫 `clearLayers()` 而 Task 7 里叫 `clearFullLayers()` 是 bug。
-
-如果你发现问题，就地修复。无需重新评审——修了就走。如果发现某条规格需求没有对应任务，加上该任务。
-
-## 执行交接
-
-保存方案后，提供执行选择：
-
-如果是轻量内联计划：
-
-```text
-轻量计划已给出。确认后我再执行。
-```
-
-等待用户确认。不要在同一条回复里直接写文件。
-
-如果是文档计划：
-
-**"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
-
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
-
-**2. Inline Execution** - Execute tasks in this session using execute, batch execution with checkpoints
-
-**Which approach?"**
-
-**若选择子代理驱动：**
-- **下一步：** 使用 claude-workflow:subagent
-- 每个任务派发新子代理 + 两阶段评审
-
-**若选择内联执行：**
-- **下一步：** 使用 claude-workflow:execute
-- 带评审检查点的批量执行
-
-## 常见违规
-
-| 说法 | 问题 | 正确做法 |
-|---|---|---|
-| "这是单文件，不写 plan 文档，直接落地" | 用文件数量替代风险判断 | 先判断风险，再选择计划形式 |
-| "设计已确认，所以我直接实现" | think 批准不是执行批准 | plan 后等执行确认 |
-| "我加载了 plan，但按项目习惯跳过" | 二次解释 skill | 改用轻量内联计划 |
-| "先写代码，再补说明" | 顺序倒置 | 先计划，后执行 |
-| "通常不会销毁，不用清理" | 用假设保留资源问题 | 写清释放/清理策略 |
+- 如果本次触碰会持续占用资源、注册外部回调、打开连接或启动后台工作，释放/清理策略属于本次改动范围

@@ -55,15 +55,16 @@ function main() {
   const skillContent = stripFrontmatter(rawContent);
 
   const preamble =
-    '<EXTREMELY-IMPORTANT>\n' +
+    '<HARD-GATE>\n' +
     '你有 Claude Workflow。\n' +
-    '必须遵守：\n' +
-    '1. 回复、澄清、读文件、跑命令或编辑前，必须先按下方 using 判断是否需要 Skill。\n' +
-    '2. 任何 Skill 适用时，必须用 Skill 工具加载当前版本；不得凭记忆、摘要或经验代替。\n' +
-    '3. 用户可见回复只说任务动作，不提 Skill、技能名或"加载"，除非用户正在讨论 workflow 本身。\n' +
-    '4. using 是唯一入口；具体流程以被加载的 Skill 内容为准。\n' +
-    '5. 如果这里和 using 冲突，以 using 为准。\n' +
-    '</EXTREMELY-IMPORTANT>\n\n' +
+    '回复、澄清、读文件、跑命令或编辑前，必须先按下方 using 判断是否需要 Skill。\n' +
+    '任何 Skill 适用时，必须用 Skill 工具加载当前版本；不得凭记忆、摘要或经验代替。\n' +
+    '</HARD-GATE>\n\n' +
+    '<constraints>\n' +
+    '- 用户可见回复只说任务动作，不提 Skill、技能名或"加载"，除非用户正在讨论 workflow 本身。\n' +
+    '- using 是唯一入口；具体流程以被加载的 Skill 内容为准。\n' +
+    '- 如果这里和 using 冲突，以 using 为准。\n' +
+    '</constraints>\n\n' +
     "下方是 'using' 工作流入口全文：\n\n";
 
   const sessionContext = '<workflow-routing>\n' + preamble + skillContent + '\n</workflow-routing>';

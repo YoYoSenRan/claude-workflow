@@ -5,11 +5,15 @@ description: 在当前会话中执行包含独立任务的实现方案时使用
 
 # 子代理驱动开发
 
+<HARD-GATE>
+规格符合性评审通过之前，不得开始代码质量评审。顺序是：实现 → 规格评审 → 代码质量评审。
+
+在任一评审还有未解决问题时，不得进入下一个任务。
+</HARD-GATE>
+
 通过为每个任务派发新的子代理来执行方案，每个任务完成后进行两阶段评审：先做规格符合性评审，再做代码质量评审。
 
 **为什么用子代理：** 你将任务委派给具备隔离上下文的专门代理。通过精心构造它们的指令和上下文，确保它们专注于任务并取得成功。它们绝不应该继承你会话的上下文或历史——你要恰到好处地为它们构造所需内容。这同时也保留了你自己的上下文用于协调工作。
-
-**核心原则：** 每个任务派发新子代理 + 两阶段评审（先规格再质量）= 高质量、快速迭代
 
 **持续执行：** 在任务之间不要停下来向用户确认。不停顿地执行方案中所有任务。仅在以下情况下停止：你无法解决的 BLOCKED 状态、确实阻碍进度的歧义，或所有任务已完成。"我应该继续吗？"的询问和进度汇总都浪费时间——用户让你执行方案，那就执行。
 
@@ -57,7 +61,7 @@ digraph process {
         "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [shape=box];
         "Code quality reviewer subagent approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
-        "Mark task complete in TodoWrite" [shape=box];
+        "Write back [x] to plan file + mark TodoWrite complete" [shape=box];
     }
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
@@ -78,15 +82,25 @@ digraph process {
     "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
     "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
     "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
-    "Mark task complete in TodoWrite" -> "More tasks remain?";
+    "Code quality reviewer subagent approves?" -> "Write back [x] to plan file + mark TodoWrite complete" [label="yes"];
+    "Write back [x] to plan file + mark TodoWrite complete" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
     "Dispatch final code reviewer subagent for entire implementation" -> "Use claude-workflow:finish";
 }
 ```
 
-## 模型选择
+### 进度持久化
+
+**plan 文件是进度的唯一真相来源。** TodoWrite 仅作会话内进度显示，丢失不影响恢复。
+
+**回写规则：** 每个任务的评审循环全部通过后，把该任务下所有 `- [ ]` 改为 `- [x]` 写回 plan 文件。验证失败时在步骤下追加 `  - ❌ failed: <错误信息>`。
+
+**定位方案文件：** 如果用户指定了路径，直接读取。如果没有指定，扫描 `docs/plans/` 目录，找包含 `- [ ]` 的文件。找到多个时列出让用户选择。
+
+**中断恢复：** 载入 plan 文件时，如果已有 `- [x]` 步骤，说明是恢复场景。汇报已完成的步骤数，从第一个 `- [ ]` 的任务继续。
+
+### 模型选择
 
 为每个角色使用能够胜任的最低能力模型，以节约成本并提升速度。
 
@@ -101,7 +115,7 @@ digraph process {
 - 涉及多个文件且存在集成顾虑 → 标准模型
 - 需要设计判断或广泛理解代码库 → 最强能力模型
 
-## 处理实现者状态
+### 处理实现者状态
 
 实现者子代理会汇报四种状态之一。分别采取合适的处理：
 
@@ -119,7 +133,7 @@ digraph process {
 
 **绝不**在不做任何改变的情况下忽视升级或强制让相同模型重试。如果实现者说卡住了，就一定有什么需要调整。
 
-## 提示词模板
+### 提示词模板
 
 - `./implementer-prompt.md` - 派发实现者子代理
 - `./spec-reviewer-prompt.md` - 派发规格符合性评审员子代理
@@ -129,7 +143,7 @@ digraph process {
 
 子代理不得默认提交、push 或创建 PR。只有用户或已批准方案明确要求提交时，才把提交动作写进派发提示词。
 
-## 示例工作流
+### 示例工作流
 
 ```
 You: I'm using Subagent-Driven Development to execute this plan.
@@ -203,6 +217,34 @@ Final reviewer: All requirements met, ready to merge
 Done!
 ```
 
+<constraints>
+- 禁止未经用户明确同意就在 main/master 分支上开始实现
+- 禁止跳过评审（规格符合性或代码质量）
+- 禁止带着未修复的问题继续下一任务
+- 禁止并行派发多个实现者子代理（会冲突）
+- 禁止让子代理读取方案文件（必须提供完整文本）
+- 禁止跳过场景说明上下文
+- 禁止忽视子代理提问
+- 禁止在规格符合性上接受"差不多就行"
+- 禁止跳过评审循环（评审员发现问题 = 实现者修复 = 再次评审）
+- 禁止让实现者的自评审取代真正的评审
+- 禁止在规格符合性通过之前开始代码质量评审
+- 禁止在任一评审有未解决问题时进入下一任务
+- 禁止在不做任何改变的情况下强制让相同模型重试 BLOCKED 任务
+- 禁止只更新 TodoWrite 而不回写 plan 文件——plan 文件是唯一真相来源
+</constraints>
+
+## 警示信号
+
+| 念头 | 现实 |
+|------|------|
+| "这个任务简单，跳过评审" | 简单任务也会有规格偏差 |
+| "实现者自评审过了，够了" | 自评审 ≠ 独立评审，两者都需要 |
+| "差不多符合规格了" | 规格评审员发现问题 = 未完成 |
+| "先做质量评审再做规格评审" | 顺序错误，规格优先 |
+| "子代理卡住了，再试一次" | 不改变任何东西就重试 = 浪费 |
+| "手动修一下比派子代理快" | 手动修复 = 上下文污染 |
+
 ## 优势
 
 **对比手动执行：**
@@ -216,55 +258,11 @@ Done!
 - 持续推进（无等待）
 - 评审检查点自动进行
 
-**效率收益：**
-- 无文件读取开销（控制器提供完整文本）
-- 控制器精准筛选所需上下文
-- 子代理一开始就获得完整信息
-- 在开始工作之前就把问题摆出来（而非事后）
-
-**质量门：**
-- 自评审在交接前抓住问题
-- 两阶段评审：先规格符合性，再代码质量
-- 评审循环确保修复真正生效
-- 规格符合性防止过度/不足构建
-- 代码质量确保实现做工扎实
-
 **成本：**
 - 更多子代理调用（每个任务实现者 + 2 个评审员）
 - 控制器需做更多准备工作（提前抽取所有任务）
 - 评审循环增加迭代次数
 - 但能尽早发现问题（比后期调试便宜）
-
-## 警示信号
-
-**绝不：**
-- 未经用户明确同意就在 main/master 分支上开始实现
-- 跳过评审（规格符合性或代码质量）
-- 带着未修复的问题继续
-- 并行派发多个实现者子代理（会冲突）
-- 让子代理读取方案文件（请提供完整文本）
-- 跳过场景说明上下文（子代理需要理解任务的位置）
-- 忽视子代理提问（在让其继续之前先回答）
-- 在规格符合性上接受"差不多就行"（规格评审员发现了问题 = 未完成）
-- 跳过评审循环（评审员发现问题 = 实现者修复 = 再次评审）
-- 让实现者的自评审取代真正的评审（两者都需要）
-- **在规格符合性 ✅ 之前开始代码质量评审**（顺序错误）
-- 在任一评审还有未解决问题时进入下一任务
-
-**如果子代理提问：**
-- 清晰、完整地回答
-- 必要时提供额外上下文
-- 不要催促它们进入实现
-
-**如果评审员发现问题：**
-- 实现者（同一个子代理）修复
-- 评审员再次评审
-- 重复直到通过
-- 不要跳过再次评审
-
-**如果子代理任务失败：**
-- 派发修复子代理并给出具体指令
-- 不要手动修复（上下文污染）
 
 ## 集成
 
