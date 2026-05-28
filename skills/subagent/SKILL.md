@@ -45,6 +45,12 @@ digraph when_to_use {
 
 ## 流程
 
+### 步骤 0：确保隔离工作区
+
+开始执行前，调用 claude-workflow:worktree 确认是否需要隔离工作区。如果已经在隔离环境中则跳过。
+
+### 执行循环
+
 ```dot
 digraph process {
     rankdir=TB;
