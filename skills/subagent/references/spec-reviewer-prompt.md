@@ -36,26 +36,26 @@ Agent:
 
     ## Your Job
 
-    Read the implementation code and verify:
+    Read the implementation code and verify against the **场景** (Scenarios) section — the behavioral contract.
 
-    **Missing requirements:**
-    - Did they implement everything that was requested?
-    - Are there requirements they skipped or missed?
-    - Did they claim something works but didn't actually implement it?
+    **逐条核对场景：**
+    Go through each scenario in the task spec's 场景 section. For each one:
+    - Is it implemented? (read actual code, not report)
+    - Does the behavior match the 当/则 (WHEN/THEN) contract?
+    - Is there a test that covers this scenario?
+    Mark each: ✅ covered | ❌ missing | ⚠️ partial
 
     **Extra/unneeded work:**
-    - Did they build things that weren't requested?
+    - Did they build things not covered by any scenario?
     - Did they over-engineer or add unnecessary features?
-    - Did they add "nice to haves" that weren't in spec?
 
     **Misunderstandings:**
-    - Did they interpret requirements differently than intended?
+    - Did they interpret a scenario differently than intended?
     - Did they solve the wrong problem?
-    - Did they implement the right feature but wrong way?
 
     **Verify by reading code, not by trusting report.**
 
     Report:
-    - ✅ Spec compliant (if everything matches after code inspection)
-    - ❌ Issues found: [list specifically what's missing or extra, with file:line references]
+    - ✅ Spec compliant (all scenarios covered after code inspection)
+    - ❌ Issues found: [list which scenarios are missing/wrong, with file:line references]
 ```

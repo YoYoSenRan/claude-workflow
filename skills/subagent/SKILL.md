@@ -1,17 +1,17 @@
 ---
 name: subagent
-description: 在当前会话中执行包含独立任务的实现方案时使用
+description: 将实现方案拆分给独立子代理逐个执行，每个任务做完后按确定性分级审查
 ---
 
 # 分任务执行方案
 
 <HARD-GATE>
-检查是否符合需求要先过，才能开始检查代码质量。顺序是：实现 → 检查是否符合需求 → 检查代码质量。
+审查级别由任务确定性决定（见 README.md 任务表）。无论哪个级别，有没解决的问题都不许进入下一个任务。
 
-任何一轮检查还有没解决的问题时，不许进入下一个任务。
+需要审查时，逐条核对 task 文件中的场景——场景说了的必须实现，没说的不该加。需求符合度先过，才能开始代码质量检查。
 </HARD-GATE>
 
-为每个任务分配一个新的独立代理来执行方案，每个任务做完后两轮检查：先看是否符合需求，再看代码质量。
+为每个任务分配一个新的独立代理来执行方案，按任务确定性分级审查。以 task 文件中的场景为审查锚点。
 
 **为什么要分任务给独立代理：** 你把任务交给有干净上下文的独立代理。通过精心准备它们的指令和上下文，确保它们专注于任务、做得好。它们不应该继承你会话的上下文或历史——你要刚好给够它们需要的信息。这同时也省下你自己的上下文用于统筹协调。
 
@@ -49,62 +49,47 @@ digraph when_to_use {
 
 开始执行前，调用 claude-workflow:worktree 确认是否需要隔离工作区。如果已经在隔离环境中则跳过。
 
+### 分级审查策略
+
+README.md 任务表中的"确定性"列决定每个任务的审查方式：
+
+| 确定性 | 审查方式 | 适用场景 |
+|---|---|---|
+| **高** | 实现者自检 + 主线程快速确认 diff | Markdown、配置、单文件明确改动 |
+| **中** | spec review only | 多文件代码、有逻辑判断 |
+| **低** | spec review + quality review | 架构、跨系统、新设计 |
+
+**始终保留：** 所有任务完成后的最终全局 review（跨任务一致性）。
+
+**高确定性的"快速确认"：** 主线程自己看一眼 `git diff`，对照 task 的场景确认改动符合预期。不派独立 reviewer 代理。
+
 ### 执行循环
 
-```dot
-digraph process {
-    rankdir=TB;
+```
+对每个任务：
+  1. 读 task spec 文件
+  2. 派实现者子代理（references/implementer-prompt.md）
+  3. 实现者提问？→ 回答后重新派发
+  4. 实现者完成 → 按确定性审查：
+     ├─ 高：主线程看 diff 确认，通过 → 下一步
+     ├─ 中：派 spec reviewer → 通过 → 下一步
+     └─ 低：派 spec reviewer → 通过 → 派 quality reviewer → 通过 → 下一步
+  5. 更新 README.md 状态 + TodoWrite
 
-    subgraph cluster_per_task {
-        label="Per Task";
-        "Dispatch implementer subagent (references/implementer-prompt.md)" [shape=box];
-        "Implementer subagent asks questions?" [shape=diamond];
-        "Answer questions, provide context" [shape=box];
-        "Implementer subagent implements, tests, reports files, self-reviews" [shape=box];
-        "Dispatch spec reviewer subagent (references/spec-reviewer-prompt.md)" [shape=box];
-        "Spec reviewer subagent confirms code matches spec?" [shape=diamond];
-        "Implementer subagent fixes spec gaps" [shape=box];
-        "Dispatch code quality reviewer subagent (references/code-quality-reviewer-prompt.md)" [shape=box];
-        "Code quality reviewer subagent approves?" [shape=diamond];
-        "Implementer subagent fixes quality issues" [shape=box];
-        "Write back [x] to plan file + mark TodoWrite complete" [shape=box];
-    }
-
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
-    "More tasks remain?" [shape=diamond];
-    "Dispatch final code reviewer subagent for entire implementation" [shape=box];
-    "Use claude-workflow:finish" [shape=box style=filled fillcolor=lightgreen];
-
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (references/implementer-prompt.md)";
-    "Dispatch implementer subagent (references/implementer-prompt.md)" -> "Implementer subagent asks questions?";
-    "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
-    "Answer questions, provide context" -> "Dispatch implementer subagent (references/implementer-prompt.md)";
-    "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, reports files, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, reports files, self-reviews" -> "Dispatch spec reviewer subagent (references/spec-reviewer-prompt.md)";
-    "Dispatch spec reviewer subagent (references/spec-reviewer-prompt.md)" -> "Spec reviewer subagent confirms code matches spec?";
-    "Spec reviewer subagent confirms code matches spec?" -> "Implementer subagent fixes spec gaps" [label="no"];
-    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (references/spec-reviewer-prompt.md)" [label="re-review"];
-    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (references/code-quality-reviewer-prompt.md)" [label="yes"];
-    "Dispatch code quality reviewer subagent (references/code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
-    "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
-    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (references/code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Code quality reviewer subagent approves?" -> "Write back [x] to plan file + mark TodoWrite complete" [label="yes"];
-    "Write back [x] to plan file + mark TodoWrite complete" -> "More tasks remain?";
-    "More tasks remain?" -> "Dispatch implementer subagent (references/implementer-prompt.md)" [label="yes"];
-    "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
-    "Dispatch final code reviewer subagent for entire implementation" -> "Use claude-workflow:finish";
-}
+所有任务完成后：
+  → 派最终 reviewer（全局一致性）
+  → claude-workflow:finish
 ```
 
 ### 怎么记录进度
 
-**进度以 plan 文件为准。** 任务列表只是当前会话的辅助，文件里的记录才算数。
+**README.md 是唯一进度源。** TodoWrite 只是当前会话辅助。
 
-**完成后怎么记录：** 每个任务的两轮检查都通过后，把该任务下所有 `- [ ]` 改为 `- [x]` 写回 plan 文件。验证失败时在步骤下追加 `  - ❌ failed: <错误信息>`。
+**完成后怎么记录：** 审查通过后，更新 README.md 任务表中对应行的状态列（⬚ → ✅）。task 文件内部的 checkbox 也标记 `[x]`。
 
-**找方案文件：** 如果用户指定了路径，直接读取。如果没有指定，扫描 `docs/plans/` 目录，找包含 `- [ ]` 的文件。找到多个时列出让用户选择。
+**找方案目录：** 如果用户指定了路径，直接读取。没指定时扫描 `docs/plans/` 下的子目录，找 README.md 中有 ⬚ 的。找到多个时列出让用户选择。
 
-**之前做了一半怎么办：** 读 plan 文件时，如果已有 `- [x]` 步骤，说明之前中断过。汇报已完成的步骤数，从第一个 `- [ ]` 的任务继续。
+**之前做了一半怎么办：** 读 README.md 任务表，如果已有 ✅ 任务，说明之前中断过。汇报已完成数，从第一个 ⬚ 任务继续。
 
 ### 选模型
 
@@ -225,19 +210,16 @@ Done!
 
 <constraints>
 - 没有用户明确同意不许在 main/master 分支上动手
-- 不许跳过任何一轮检查（需求符合度或代码质量）
+- 审查级别由确定性列决定——高确定性可跳过独立 reviewer，但不等于不看
 - 有没修好的问题不许做下一个任务
 - 不许同时分配多个执行代理（会冲突）
-- 不许让 subagent 自己去读方案文件（必须把完整文本给它）
+- 不许让 subagent 自己去读方案目录（必须把 task spec 完整文本给它）
 - 不许跳过场景说明和上下文
 - 不许无视 subagent 的提问
 - 需求符合度检查不许"差不多就行"
-- 不许跳过"检查、发现问题、修、再检查"这个循环
-- 不许拿执行代理的自查代替独立检查
-- 需求符合度检查没过不许开始代码质量检查
-- 任何一轮检查有没解决的问题就不许做下一个任务
+- 需求符合度检查没过不许开始代码质量检查（中/低确定性任务）
 - 不许在什么都不改的情况下让同一个模型重试卡住的任务
-- 不许只更新任务列表而不把进度写回 plan 文件——进度以 plan 文件为准
+- 不许只更新 TodoWrite 而不更新 README.md——README.md 是唯一进度源
 </constraints>
 
 ## 警示信号
@@ -246,7 +228,7 @@ Done!
 |------|------|
 | "这个任务简单，跳过检查" | 简单任务也会偏离需求 |
 | "执行代理自己查过了，够了" | 自查 ≠ 独立检查，两个都要 |
-| "差不多符合需求了" | 检查发现问题 = 没完成 |
+| "差不多符合需求了" | 逐条对场景，差一条 = 没完成 |
 | "先查代码质量再查需求" | 顺序错了，需求优先 |
 | "代理卡住了，再试一次" | 什么都不改就重试 = 浪费 |
 | "手动修一下比分配代理快" | 手动修 = 上下文串了 |

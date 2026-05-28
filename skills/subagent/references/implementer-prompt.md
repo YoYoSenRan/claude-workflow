@@ -29,12 +29,13 @@ Agent:
     ## Your Job
 
     Once you're clear on requirements:
-    1. Implement exactly what the task specifies
-    2. Write tests (following TDD if task says to)
-    3. Verify implementation works
-    4. Report files changed; do not commit unless the task explicitly asks for a commit
-    5. Self-review (see below)
-    6. Report back
+    1. Read the **场景** (Scenarios) section — these are the behavioral contract you must satisfy
+    2. Write tests that cover each scenario (following TDD if task says to)
+    3. Implement exactly what the scenarios + steps specify
+    4. Verify implementation works
+    5. Report files changed; do not commit unless the task explicitly asks for a commit
+    6. Self-review (see below)
+    7. Report back
 
     Work from: [directory]
 
@@ -75,10 +76,10 @@ Agent:
 
     Review your work with fresh eyes. Ask yourself:
 
-    **Completeness:**
-    - Did I fully implement everything in the spec?
-    - Did I miss any requirements?
-    - Are there edge cases I didn't handle?
+    **Completeness (check against 场景):**
+    - Did I cover every scenario listed in the task spec?
+    - Does each scenario have a corresponding test?
+    - Are there edge cases in the scenarios I didn't handle?
 
     **Quality:**
     - Is this my best work?

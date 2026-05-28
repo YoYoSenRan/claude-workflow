@@ -1,6 +1,6 @@
 ---
 name: test
-description: 在实现任何功能或修复缺陷时，于编写实现代码之前使用
+description: 为功能或修复编写测试，遵循先测试后实现的 TDD 流程
 ---
 
 # 测试驱动开发（TDD）

@@ -1,6 +1,6 @@
 ---
 name: plan
-description: 当 think 判断为复杂任务时使用——编写设计 + 实现方案，保存到文件，用于跨会话追踪和子代理执行
+description: 为复杂任务编写设计与分步实现方案，包含场景定义、文件结构和验证步骤，支持跨会话追踪
 ---
 
 # 编写设计与实现方案
@@ -13,7 +13,18 @@ description: 当 think 判断为复杂任务时使用——编写设计 + 实现
 
 编写包含设计和实现步骤的完整方案。假设做事的人对代码库零上下文——把他们需要知道的一切写清楚。
 
-**方案保存至：** `docs/plans/YYYY-MM-DD-<feature-name>.md`（用户偏好会覆盖此默认值）
+**方案保存至：** `docs/plans/YYYY-MM-DD-<feature-name>/`（用户偏好会覆盖此默认值）
+
+```
+docs/plans/YYYY-MM-DD-<feature-name>/
+├── README.md           # 索引：目标、设计、任务清单（标题+状态）
+└── tasks/
+    ├── 01-<task-name>.md   # 单个任务的完整 spec
+    ├── 02-<task-name>.md
+    └── ...
+```
+
+**为什么拆开：** README.md 轻量（进度一目了然），task 文件独立（子代理只读自己那份，不加载整个方案）。
 
 ## 何时使用
 
@@ -51,39 +62,61 @@ description: 当 think 判断为复杂任务时使用——编写设计 + 实现
 
 步骤按自然顺序排列，靠位置表达依赖——上一步完成才做下一步。
 
-### 方案文件格式
+### README.md 格式
 
 ```markdown
-# [Feature Name] Implementation Plan
+# [Feature Name]
 
-> **For agentic workers:** Use claude-workflow:subagent (recommended) or claude-workflow:execute to implement this plan. Steps use checkbox syntax for tracking. **Executors must write back `[x]` to this file as steps complete — this file is the single source of truth for progress.**
+> **For agentic workers:** Use claude-workflow:subagent (recommended) or claude-workflow:execute to implement this plan. **README.md is the single source of truth for progress.** Task specs are in `tasks/` directory.
 
 ## 设计
 
-**Goal:** [One sentence]
+**目标：** [一句话]
 
-**Architecture:** [Components, data flow, key decisions]
+**架构：** [组件、数据流]
 
-**Tech Stack:** [Key technologies/libraries]
+**决策：**
+- [决策点]: [选择] — [为什么，放弃了什么]
 
-**Tradeoffs:** [Why this approach, what was rejected]
-
-**Files:**
-- Create: `exact/path/to/file`
-- Modify: `exact/path/to/existing`
-- Test: `tests/exact/path/to/test`
-
----
+**文件：**
+- 新建: `exact/path/to/file`
+- 修改: `exact/path/to/existing`
+- 测试: `tests/exact/path/to/test`
 
 ## 任务
 
-### Task 1: [Component Name]
+| # | 任务 | 确定性 | 状态 |
+|---|---|---|---|
+| 1 | [任务标题] | 高/中/低 | ⬚ |
+| 2 | [任务标题] | 高/中/低 | ⬚ |
 
-**Files:**
+状态标记：⬚ 待做 · ▶ 进行中 · ✅ 完成 · ⚠️ 需要判断 · ❌ 阻塞 · ⏭ 跳过
+```
+
+**确定性列**决定审查策略（见 subagent 技能）：
+- **高** — 改什么一目了然，无歧义（Markdown、配置、单文件明确改动）
+- **中** — 多文件代码、有逻辑判断
+- **低** — 架构、跨系统、新设计
+
+### Task 文件格式
+
+每个任务一个文件，保存在 `tasks/` 下。核心结构：场景定义行为契约（做什么），步骤定义实现方法（怎么做）。
+
+```markdown
+# Task N: [任务标题]
+
+**文件：**
 - `exact/path/to/file`
 - `tests/path/to/test`
 
-- [ ] 先写测试（此时应该不通过）
+**场景：**
+- 当 [前置条件/操作] 则 [预期行为/结果]
+- 当 [边界条件] 则 [预期行为]
+- 当 [异常输入] 则 [错误处理]
+
+**步骤（TDD）：**
+
+- [ ] 先写测试（覆盖上述场景）
 
   [code block with actual test code]
 
@@ -98,24 +131,54 @@ description: 当 think 判断为复杂任务时使用——编写设计 + 实现
 - [ ] 最后整理代码
 
   Run: `test command` — all PASS, no regressions
-
-### Task 2: [Next Component]
-...
 ```
+
+**场景怎么写：** 每个场景是一个可测试的行为断言。审查时逐条核对——场景说了的必须实现，没说的不该加。数量控制在 3-7 个，覆盖正常路径 + 关键边界 + 错误路径。
+
+#### 非代码任务
+
+配置变更、数据库迁移、文档更新等无法自动化测试的任务，用验证场景替代 TDD 步骤：
+
+```markdown
+# Task N: [配置/迁移/文档任务名]
+
+**文件：**
+- `exact/path/to/file`
+
+**场景：**
+- 当 [执行变更后] 则 [可观测的预期状态]
+- 当 [验证命令] 则 [预期输出]
+
+**步骤：**
+
+- [ ] 执行变更
+
+  [具体的文件内容或命令]
+
+- [ ] 验证变更生效
+
+  Run: `验证命令` — expected: [预期输出]
+
+  无法用命令验证时，写明人工检查项：
+  > 人工确认：[具体检查什么、怎么检查]
+```
+
+不要给配置文件硬写单元测试。验证方式匹配任务类型。
 
 ### 自己检查一遍
 
 写完方案后回看一遍：
 
 1. **需求覆盖：** 每条需求都能指向一个任务吗？列出缺口。
-2. **占位符扫描：** "TBD"、"TODO"、"implement later"、"add validation"、没有代码块的代码步骤——都是方案失败。修掉。
-3. **一致性：** 后面任务用到的名称是否与前面任务定义的一致？
+2. **场景覆盖：** 每个任务的场景是否覆盖了正常路径、关键边界、错误路径？场景是审查锚点——漏了就查不出来。
+3. **占位符扫描：** "TBD"、"TODO"、"implement later"、"add validation"、没有代码块的代码步骤——都是方案失败。修掉。
+4. **一致性：** 后面任务用到的名称是否与前面任务定义的一致？
 
 发现问题就地修复，修完就走。
 
 ### 方案写好后怎么执行
 
-**"方案已保存到 `docs/plans/<filename>.md`。两种执行方式：**
+**"方案已保存到 `docs/plans/<name>/`。两种执行方式：**
 
 **1. 拆成小任务分别完成（推荐）** — 每个任务单独完成，任务之间检查一下
 
@@ -127,10 +190,10 @@ description: 当 think 判断为复杂任务时使用——编写设计 + 实现
 
 **若选择在当前会话逐步做：** 使用 claude-workflow:execute
 
-**完成后把进度记到文件里：**
-- 完成一步后，把 `- [ ]` 改为 `- [x]` 写回方案文件
-- 失败时在步骤下追加 `  - ❌ failed: <错误信息>`
-- 进度以方案文件为准，任务列表只是当前会话的辅助，文件里的记录才算数
+**进度追踪：**
+- **README.md 是唯一进度源** — 完成任务后更新对应行的状态列
+- **task 文件内部的 checkbox** — 完成步骤后标记 `[x]`，失败追加 `❌ failed: <信息>`
+- TodoWrite 只是当前会话辅助，README.md 里的状态才算数
 
 <constraints>
 不允许占位符——每一步都必须包含做事的人实际需要的内容。以下都是方案失败：
