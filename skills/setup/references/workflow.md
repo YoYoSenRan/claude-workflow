@@ -68,3 +68,55 @@
 ## 写入后验证
 
 每个 skill 有 `SKILL.md` / `name` / `description`，`name` 与目录名一致；rules 简短无长示例；所有 reference 落在 `.claude/skills/<name>/references/` 且被对应 SKILL.md 显式引用；没有 `.claude/references/*.md`；setup report / domains / habits / quality gates 已落到建议位置；SKILL.md 没有大段复写 rules；没有空壳 skill。
+
+## CLAUDE.md 模板
+
+项目入口说明默认写入项目根 `CLAUDE.md`，只放项目级使用规则，不放长示例。如果项目已用 `.claude/CLAUDE.md` 或用户要求，沿用之。不要同时新建两个入口。
+
+已有 `CLAUDE.md` 时优先追加"使用规则"小节，不覆盖原内容。
+
+```markdown
+# Project Instructions
+
+本项目使用 Claude Workflow 生成项目级 rules、skills 和 references。
+
+## 使用规则
+
+- 开始代码任务前，遵守 `.claude/rules/` 中适用规则。
+- 涉及实现、计划、调试、测试时，按当前任务加载最相关的项目 skill。
+- 不要一次性加载全部项目 skills。
+- 项目 rules 和本文件优先于通用 workflow 默认建议。
+- 如果项目 skill 与当前代码冲突，先读相似实现，以当前代码为准并说明冲突。
+```
+
+## Setup Report 模板
+
+setup report 必须归属某个任务 skill，放在 `.claude/skills/<task-skill>/references/setup-report.md`。没有合适 skill 承载时降级为内部扫描账本，不生成独立文件。
+
+```markdown
+# Setup Report
+
+## 已识别
+
+- 项目类型：
+- 技术栈：
+- 包管理器：
+- 测试工具：
+- 构建工具：
+
+## 已生成
+
+- ...
+
+## 习惯矩阵
+
+- 详见 `habits.md`
+
+## 证据来源
+
+- ...
+
+## 使用注意
+
+- ...
+```
