@@ -12,8 +12,7 @@ Agent:
 
   DESCRIPTION: [task summary, from implementer's report]
   PLAN_OR_REQUIREMENTS: Task N from [plan-file]
-  BASE_SHA: [commit before task]
-  HEAD_SHA: [current commit]
+  DIFF_COMMAND: [git diff command for this task]
 ```
 
 **除标准代码质量关注点之外，评审员应检查：**
@@ -22,4 +21,4 @@ Agent:
 - 实现是否遵循方案中的文件结构？
 - 本次实现是否新建了已经很大的文件，或显著扩大了已有文件？（不要标注已存在的文件大小——只关注本次变更带来的部分。）
 
-**代码评审员返回：** 优点、问题（关键 / 重要 / 次要）、评定
+**评审员返回：** Findings、未验证/剩余风险、评定

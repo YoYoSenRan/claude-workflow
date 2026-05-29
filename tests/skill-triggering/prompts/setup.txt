@@ -1,0 +1,1 @@
+帮我给这个项目初始化一下 Claude Code 的工作流配置，生成 rules 和 skills。

@@ -1,0 +1,10 @@
+测试跑不过了，报错信息：
+
+```
+FAIL src/utils/parser.test.ts
+  ● Parser › should handle nested objects
+    TypeError: Cannot read property 'value' of undefined
+      at parse (src/utils/parser.ts:42:18)
+```
+
+帮我看看什么问题。

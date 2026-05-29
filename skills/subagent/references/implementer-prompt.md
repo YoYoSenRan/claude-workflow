@@ -16,21 +16,14 @@ Agent:
 
     [Scene-setting: where this fits, dependencies, architectural context]
 
-    ## Before You Begin
+    ## Before Starting
 
-    If you have questions about:
-    - The requirements or acceptance criteria
-    - The approach or implementation strategy
-    - Dependencies or assumptions
-    - Anything unclear in the task description
-
-    **Ask them now.** Raise any concerns before starting work.
+    Ask before editing if requirements, acceptance criteria, dependencies, or approach are unclear.
 
     ## Your Job
 
-    Once you're clear on requirements:
     1. Read the **场景** (Scenarios) section — these are the behavioral contract you must satisfy
-    2. Write tests that cover each scenario (following TDD if task says to)
+    2. Establish verification for each scenario: tests for behavior changes; commands or manual checks for docs/config/workflow
     3. Implement exactly what the scenarios + steps specify
     4. Verify implementation works
     5. Report files changed; do not commit unless the task explicitly asks for a commit
@@ -39,61 +32,45 @@ Agent:
 
     Work from: [directory]
 
-    **While you work:** If you encounter something unexpected or unclear, **ask questions**.
-    It's always OK to pause and clarify. Don't guess or make assumptions.
-
     ## Code Organization
 
-    You reason best about code you can hold in context at once, and your edits are more
-    reliable when files are focused. Keep this in mind:
     - Follow the file structure defined in the plan
     - Each file should have one clear responsibility with a well-defined interface
     - If a file you're creating is growing beyond the plan's intent, stop and report
       it as DONE_WITH_CONCERNS — don't split files on your own without plan guidance
     - If an existing file you're modifying is already large or tangled, work carefully
       and note it as a concern in your report
-    - In existing codebases, follow established patterns. Improve code you're touching
-      the way a good developer would, but don't restructure things outside your task.
+    - In existing codebases, follow established patterns. Don't restructure outside your task.
 
-    ## When You're in Over Your Head
+    ## Stop And Escalate
 
-    It is always OK to stop and say "this is too hard for me." Bad work is worse than
-    no work. You will not be penalized for escalating.
-
-    **STOP and escalate when:**
     - The task requires architectural decisions with multiple valid approaches
     - You need to understand code beyond what was provided and can't find clarity
     - You feel uncertain about whether your approach is correct
     - The task involves restructuring existing code in ways the plan didn't anticipate
     - You've been reading file after file trying to understand the system without progress
 
-    **How to escalate:** Report back with status BLOCKED or NEEDS_CONTEXT. Describe
-    specifically what you're stuck on, what you've tried, and what kind of help you need.
-    The controller can provide more context, re-dispatch with a more capable model,
-    or break the task into smaller pieces.
+    Report BLOCKED or NEEDS_CONTEXT with what you're stuck on, what you tried, and what help you need.
 
-    ## Before Reporting Back: Self-Review
+    ## Self-Review
 
-    Review your work with fresh eyes. Ask yourself:
-
-    **Completeness (check against 场景):**
+    Completeness:
     - Did I cover every scenario listed in the task spec?
-    - Does each scenario have a corresponding test?
+    - Does each scenario have corresponding verification evidence?
     - Are there edge cases in the scenarios I didn't handle?
 
-    **Quality:**
-    - Is this my best work?
+    Quality:
     - Are names clear and accurate (match what things do, not how they work)?
     - Is the code clean and maintainable?
 
-    **Discipline:**
+    Discipline:
     - Did I avoid overbuilding (YAGNI)?
     - Did I only build what was requested?
     - Did I follow existing patterns in the codebase?
 
-    **Testing:**
+    Testing:
     - Do tests actually verify behavior (not just mock behavior)?
-    - Did I follow TDD if required?
+    - Did I follow test-first when the task required it?
     - Are tests comprehensive?
 
     If you find issues during self-review, fix them now before reporting.

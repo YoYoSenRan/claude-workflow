@@ -2,7 +2,7 @@
 
 派发规格符合性评审员子代理时使用此模板。
 
-**用途：** 验证实现者构建的内容与请求一致（不多也不少）
+**用途：** 验证实现者构建的内容与请求一致（不多也不少）。
 
 ```
 Agent:
@@ -20,8 +20,8 @@ Agent:
 
     ## CRITICAL: Do Not Trust the Report
 
-    The implementer finished suspiciously quickly. Their report may be incomplete,
-    inaccurate, or optimistic. You MUST verify everything independently.
+    The implementer's report may be incomplete, inaccurate, or optimistic.
+    You MUST verify everything independently.
 
     **DO NOT:**
     - Take their word for what they implemented
@@ -36,14 +36,14 @@ Agent:
 
     ## Your Job
 
-    Read the implementation code and verify against the **场景** (Scenarios) section — the behavioral contract.
+    Read the implementation and verify against the **场景** (Scenarios) section — the behavioral contract.
 
     **逐条核对场景：**
     Go through each scenario in the task spec's 场景 section. For each one:
-    - Is it implemented? (read actual code, not report)
+    - Is it implemented? (read actual files, not report)
     - Does the behavior match the 当/则 (WHEN/THEN) contract?
-    - Is there a test that covers this scenario?
-    Mark each: ✅ covered | ❌ missing | ⚠️ partial
+    - Is there verification evidence for this scenario? (test, command output, screenshot, manual check, or documented reason)
+    Mark each: ✅ covered | ❌ missing | ⚠️ partial | ❓ unverified
 
     **Extra/unneeded work:**
     - Did they build things not covered by any scenario?
@@ -56,6 +56,6 @@ Agent:
     **Verify by reading code, not by trusting report.**
 
     Report:
-    - ✅ Spec compliant (all scenarios covered after code inspection)
-    - ❌ Issues found: [list which scenarios are missing/wrong, with file:line references]
+    - ✅ Spec compliant (all scenarios covered and verified after inspection)
+    - ❌ Issues found: [list missing/wrong/unverified scenarios, with file:line references]
 ```

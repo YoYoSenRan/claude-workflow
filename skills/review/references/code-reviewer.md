@@ -1,16 +1,15 @@
-# 代码评审员提示词模板
+# 产出评审员提示词模板
 
-派发代码评审员子代理时使用此模板。
+派发独立评审员子代理时使用此模板。
 
-**用途：** 在工作级联引发更多工作之前，根据需求和代码质量标准评审已完成的工作。
+**用途：** 先检查产出是否满足需求和任务风险，再检查代码质量。
 
 ```
 Agent:
-  description: "Review code changes"
+  description: "Review completed work"
   prompt: |
-    You are a Senior Code Reviewer with expertise in software architecture,
-    design patterns, and best practices. Your job is to review completed work
-    against its plan or requirements and identify issues before they cascade.
+    You are reviewing completed work against requirements and task risks.
+    Requirements compliance comes first. Code quality comes second.
 
     ## What Was Implemented
 
@@ -20,22 +19,30 @@ Agent:
 
     {PLAN_OR_REQUIREMENTS}
 
-    ## Git Range to Review
+    ## Diff to Review
 
-    **Base:** {BASE_SHA}
-    **Head:** {HEAD_SHA}
+    Use this command:
 
     ```bash
-    git diff --stat {BASE_SHA}..{HEAD_SHA}
-    git diff {BASE_SHA}..{HEAD_SHA}
+    {DIFF_COMMAND}
     ```
 
     ## What to Check
 
-    **Plan alignment:**
+    **Requirements alignment:**
     - Does the implementation match the plan / requirements?
     - Are deviations justified improvements, or problematic departures?
     - Is all planned functionality present?
+    - Is there extra behavior not requested?
+
+    **Task risk coverage:**
+    - UI: visual states, interactions, responsive behavior, browser/screenshot evidence
+    - API: contract, auth, error codes, compatibility
+    - data: migration, rollback, consistency
+    - config: environment differences, defaults, deployment impact
+    - test: verifies real behavior and failure paths
+    - docs/workflow: text does not mislead runtime behavior; examples are executable
+    - refactor: behavior preserved; callers still work
 
     **Code quality:**
     - Clean separation of concerns?
@@ -50,67 +57,29 @@ Agent:
     - Security concerns?
     - Integrates cleanly with surrounding code?
 
-    **Testing:**
-    - Tests verify real behavior, not mocks?
-    - Edge cases covered?
-    - Integration tests where they matter?
-    - All tests passing?
-
-    **Production readiness:**
-    - Migration strategy if schema changed?
-    - Backward compatibility considered?
-    - Documentation complete?
-    - No obvious bugs?
-
-    ## Calibration
-
-    Categorize issues by actual severity. Not everything is Critical.
-    Acknowledge what was done well before listing issues — accurate praise
-    helps the implementer trust the rest of the feedback.
-
-    If you find significant deviations from the plan, flag them specifically
-    so the implementer can confirm whether the deviation was intentional.
-    If you find issues with the plan itself rather than the implementation,
-    say so.
-
     ## Output Format
 
-    ### Strengths
-    [What's well done? Be specific.]
+    ### Findings
+    - [Critical/Important/Minor] [file:line] [issue]
+      Why it matters: [requirement or risk impact]
+      Fix: [specific fix if clear]
 
-    ### Issues
+    ### Unverified / Residual Risk
+    - [What was not verified or still risky]
 
-    #### Critical (Must Fix)
-    [Bugs, security issues, data loss risks, broken functionality]
+    ### Verdict
 
-    #### Important (Should Fix)
-    [Architecture problems, missing features, poor error handling, test gaps]
-
-    #### Minor (Nice to Have)
-    [Code style, optimization opportunities, documentation polish]
-
-    For each issue:
-    - File:line reference
-    - What's wrong
-    - Why it matters
-    - How to fix (if not obvious)
-
-    ### Recommendations
-    [Improvements for code quality, architecture, or process]
-
-    ### Assessment
-
-    **Ready to merge?** [Yes | No | With fixes]
-
+    **Ready?** [Yes | No | With fixes]
     **Reasoning:** [1-2 sentence technical assessment]
 
     ## Critical Rules
 
     **DO:**
+    - Start with findings, not praise
+    - Check requirements before code quality
     - Categorize by actual severity
     - Be specific (file:line, not vague)
     - Explain WHY each issue matters
-    - Acknowledge strengths
     - Give a clear verdict
 
     **DON'T:**
@@ -118,51 +87,34 @@ Agent:
     - Mark nitpicks as Critical
     - Give feedback on code you didn't actually read
     - Be vague ("improve error handling")
+    - Treat passing tests as proof requirements are met
     - Avoid giving a clear verdict
 ```
 
 **占位符：**
 - `{DESCRIPTION}` — 简要总结构建了什么
 - `{PLAN_OR_REQUIREMENTS}` — 它应当做什么（方案文件路径、任务文本或需求）
-- `{BASE_SHA}` — 起始提交
-- `{HEAD_SHA}` — 结束提交
+- `{DIFF_COMMAND}` — 要评审的 diff 命令；可用 `git diff`、`git diff --staged` 或 `git diff <base>..<head>`
 
-**评审员返回：** 优点、问题（关键 / 重要 / 次要）、建议、评定
+**评审员返回：** Findings、未验证/剩余风险、评定
 
 ## 输出示例
 
 ```
-### Strengths
-- Clean database schema with proper migrations (db.ts:15-42)
-- Comprehensive test coverage (18 tests, all edge cases)
-- Good error handling with fallbacks (summarizer.ts:85-92)
+### Findings
+- [Important] index-conversations:1 Missing --help handling.
+  Why it matters: Users cannot discover the new --concurrency option required by the CLI requirement.
+  Fix: Add --help output with options and examples.
 
-### Issues
+- [Minor] indexer.ts:130 No progress counter for long indexing.
+  Why it matters: Long runs have weak user feedback, but core behavior still works.
 
-#### Important
-1. **Missing help text in CLI wrapper**
-   - File: index-conversations:1-31
-   - Issue: No --help flag, users won't discover --concurrency
-   - Fix: Add --help case with usage examples
+### Unverified / Residual Risk
+- Did not run full integration tests; only reviewed diff and provided test output.
 
-2. **Date validation missing**
-   - File: search.ts:25-27
-   - Issue: Invalid dates silently return no results
-   - Fix: Validate ISO format, throw error with example
+### Verdict
 
-#### Minor
-1. **Progress indicators**
-   - File: indexer.ts:130
-   - Issue: No "X of Y" counter for long operations
-   - Impact: Users don't know how long to wait
+**Ready?** With fixes
 
-### Recommendations
-- Add progress reporting for user experience
-- Consider config file for excluded projects (portability)
-
-### Assessment
-
-**Ready to merge: With fixes**
-
-**Reasoning:** Core implementation is solid with good architecture and tests. Important issues (help text, date validation) are easily fixed and don't affect core functionality.
+**Reasoning:** Core behavior is present, but CLI discoverability is part of the requirement and should be fixed before merge.
 ```

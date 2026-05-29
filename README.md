@@ -57,10 +57,6 @@
 
 派 subagent 出去,返回"已完成评审,无问题"。主智能体直接转述给你,**自己一行代码没读**。
 
-### 每次新会话从零科普项目
-
-新开会话又得讲:这项目用 BEM、SCSS 嵌套不超三层、用 npm 不用 yarn、验证命令是 `npm run check`、业务术语"工单"在代码里叫 `ticket`...讲十分钟才进入正题,五轮对话又忘一半。
-
 ### 小改也要走完整流程
 
 > 你: "把这个变量名改成 `userId`。"
@@ -94,20 +90,28 @@
 
 ## 它是怎么治的
 
-每个 skill 对应一类失控场景,只在该出手的时候出手:
+不是让所有 skill 平级抢活儿,而是先收成一条主线:
 
-| 失控场景 | 对应 skill | 加的弹簧 |
+```text
+using
+  → think / debug / setup / review / skill
+      → plan
+          → execute 或 subagent
+              → test / review / verify
+                  → finish（只在提交、PR、合并、保留、丢弃时）
+```
+
+每层只管自己的事:
+
+| 层级 | 角色 | 做什么 |
 |---|---|---|
-| "看一下" 变成 "改一下" | `think` | 用户没说改之前禁止动手 |
-| 模糊需求盲改 | `think` | 范围不清先复述、提问、等回话 |
-| 计划注水 | `plan` | 每步必须有路径、命令、预期输出 |
-| 执行中悄悄改计划 | `execute` | 偏离必须停下来报告 |
-| Bug 猜谜 | `debug` | Phase 1 没完成前禁提修复;连改 3 次失败必须停 |
-| "已修复" 没跑过 | `verify` | 完成声明必须挂当前会话真实运行的命令 |
-| 主动覆盖你的活 | `finish` | 破坏性 git 必须单独确认 |
-| 子代理挡箭牌 | `subagent` | 最终决策必须主智能体亲自背 |
-| 每次重新科普项目 | `setup` | 扫描后沉淀到 `.claude/rules` 自动加载 |
-| 小改套大流程 | `using` | 先路由判断规模,小改轻量做 |
+| 入口 | `using` | 会话启动注入,只判断用户要哪类工作 |
+| 主控 | `think` | 普通开发任务的路线判断: 小任务轻量做,复杂任务先方案 |
+| 特殊入口 | `debug` / `setup` / `review` / `skill` | bug、项目初始化、产出检查、维护本插件时接管流程 |
+| 方案 | `plan` | 只给复杂任务写正式设计和任务 spec |
+| 执行 | `execute` / `subagent` | 当前会话逐步执行,或拆给独立代理执行 |
+| 质量门 | `test` / `review` / `verify` | 按风险测试、检查产出、完成前拿证据 |
+| 交付 | `finish` | 只处理提交、PR、合并、保留、丢弃 |
 
 ---
 
@@ -127,28 +131,28 @@ npm run install:github
 
 ## Skills
 
-主流程 — 任务推进路径:
+入口和主控:
 
 | Skill | 触发 |
 |---|---|
 | [`using`](skills/using/SKILL.md) | 会话启动,由 SessionStart hook 注入 |
-| [`think`](skills/think/SKILL.md) | 只读分析、方案判断、模糊需求澄清 |
-| [`plan`](skills/plan/SKILL.md) | 把已确认需求写成可执行计划 |
-| [`execute`](skills/execute/SKILL.md) | 按已批准计划逐步执行 |
+| [`think`](skills/think/SKILL.md) | 新功能、重构、行为变更、复杂判断的主控 |
 | [`debug`](skills/debug/SKILL.md) | 报错、测试失败、异常行为根因调查 |
+| [`setup`](skills/setup/SKILL.md) | 扫描项目生成 `.claude/rules`、`.claude/skills`（含 `references/` 子目录） |
+| [`review`](skills/review/SKILL.md) | 用户要求检查代码或产出时使用 |
+| [`skill`](skills/skill/SKILL.md) | 维护本插件 skill |
 
-增强 — 关键节点的硬门槛:
+下游能力:
 
 | Skill | 触发 |
 |---|---|
+| [`plan`](skills/plan/SKILL.md) | 复杂任务写正式设计与任务 spec |
+| [`execute`](skills/execute/SKILL.md) | 在当前会话按已批准计划逐步执行 |
+| [`subagent`](skills/subagent/SKILL.md) | 按已批准计划拆给独立代理执行并分级审查 |
 | [`test`](skills/test/SKILL.md) | 测试策略、回归用例、替代验证 |
 | [`verify`](skills/verify/SKILL.md) | 完成声明前新鲜证据检查 |
 | [`finish`](skills/finish/SKILL.md) | 提交、PR、保留、丢弃决策 |
-| [`review`](skills/review/SKILL.md) | 代码评审,Findings 先行 |
 | [`worktree`](skills/worktree/SKILL.md) | 隔离工作区规则 |
-| [`subagent`](skills/subagent/SKILL.md) | 按计划执行独立任务的子代理驱动开发 |
-| [`skill`](skills/skill/SKILL.md) | 维护本插件 skill |
-| [`setup`](skills/setup/SKILL.md) | 扫描项目生成 `.claude/rules`、`.claude/skills`（含 `references/` 子目录） |
 
 ## 受限扫描 agents
 
